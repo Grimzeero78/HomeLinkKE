@@ -6,13 +6,13 @@ const LBLANK = () => ({
   water: 'Included in rent', waterCost: '', waterSched: '', waterTank: 'No',
   elec: 'Own token meter', elecCost: '', wifi: 'Not available', wifiCost: '', wifiProvider: '',
   garbage: 'Included', backup: 'None',
-  bath: 'Shared', kitchen: 'Shared', cooking: 'Yes', balcony: 'No', tile: 'Tiled', ceiling: 'Yes',
-  wardrobe: 'No', bed: 'No', hotShower: 'No',
+  bath: '1', ensuite: 'No', kitchen: 'No', parking: 'No', balcony: 'No', tile: 'Tiled', ceiling: 'Yes',
+  wardrobe: 'No', hotShower: 'No',
   security: [], tenantPref: 'Anyone', pets: 'No',
   availableFrom: 'Available now', contactPhone: '', photos: [], thumbs: [],
 });
 
-const WIZ_STEPS = ['Basics', 'Location', 'Pricing', 'Utilities', 'Room', 'Tenants', 'Availability', 'Photos'];
+const WIZ_STEPS = ['Basics', 'Location', 'Pricing', 'Utilities', 'Inside', 'Tenants', 'Availability', 'Photos'];
 
 async function viewCreate(id) {
   if (!state.user) { location.hash = '#/login'; return; }
@@ -33,6 +33,10 @@ async function viewCreate(id) {
     if (!r.ok || !r.isOwner) { v.innerHTML = emptyBox('Cannot edit', r.error || 'Not your listing.'); return; }
     L = { ...L, ...r.listing, security: parseSecurity(r.listing.security),
       photos: (r.photos || []).map(p => p.url), thumbs: (r.photos || []).map(p => p.thumb || '') };
+    // normalize pre-v3 wording into the new nationwide fields (bath = count, ensuite/kitchen = Yes/No)
+    if (L.kitchen === 'Own') L.kitchen = 'Yes';
+    if (L.bath === 'Ensuite (own)') { L.ensuite = 'Yes'; L.bath = '1'; }
+    if (L.bed === 'Yes' && L.furnishing === 'Unfurnished') L.furnishing = 'Semi-furnished';
     editingId = id;
   }
   let step = 0;
@@ -104,15 +108,15 @@ async function viewCreate(id) {
       ${txt('wifiProvider', 'WiFi provider (optional)', 'e.g. Faiba, Safaricom, Starlink')}
       ${sel('garbage', 'Garbage disposal', GARBAGE)}
       ${sel('backup', 'Backup power', BACKUP)}` },
-    { t: 'Room & building', html: () => `
-      ${sel('bath', 'Bathroom', BATH)}
-      ${sel('kitchen', 'Kitchen', KITCHEN)}
-      ${sel('cooking', 'Cooking allowed', ['Yes', 'No', 'Outside kitchen only'])}
+    { t: 'Inside the unit', html: () => `
+      ${sel('bath', 'Bathrooms', BATHS)}
+      ${yesNo('ensuite', 'Own bathroom (en-suite)?')}
+      ${yesNo('kitchen', 'Own kitchen inside the unit?')}
+      ${yesNo('parking', 'Parking space available?')}
       ${yesNo('balcony', 'Balcony?')}
       ${sel('tile', 'Floor finish', ['Tiled', 'Not tiled'])}
       ${yesNo('ceiling', 'Ceiling board?')}
-      ${yesNo('wardrobe', 'Wardrobe provided?')}
-      ${yesNo('bed', 'Bed provided?')}
+      ${yesNo('wardrobe', 'Built-in wardrobes?')}
       ${yesNo('hotShower', 'Hot shower?')}` },
     { t: 'Security & tenants', html: () => `
       <label class="lbl">Security (choose all that apply)</label>
@@ -348,7 +352,9 @@ async function viewCreate(id) {
         ['Estate', L.area ? L.area + (L.landmark ? ' — ' + L.landmark : '') : ''],
         ['Rent', L.rent ? kes(L.rent) + ' / ' + (L.period || '').toLowerCase() : ''],
         ['Deposit', L.deposit ? kes(L.deposit) : 'None'],
-        ['Water', L.water], ['Electricity', L.elec], ['WiFi', L.wifi], ['Bathroom', L.bath],
+        ['Water', L.water], ['Electricity', L.elec], ['WiFi', L.wifi], ['Bathrooms', L.bath],
+        ['Own bathroom', L.ensuite === 'Yes' ? 'Yes' : ''], ['Own kitchen', L.kitchen === 'Yes' ? 'Yes' : ''],
+        ['Parking', L.parking === 'Yes' ? 'Yes' : ''],
         ['Preferred tenants', L.tenantPref], ['Pets', L.pets], ['Available', L.availableFrom || 'Now'], ['Photos', L.photos.length + ' added'],
       ];
       rv.innerHTML = rows.filter(r2 => r2[1]).map(r2 => `<div class="rev-row"><span class="k">${r2[0]}</span><span class="v">${esc(r2[1])}</span></div>`).join('');

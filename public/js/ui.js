@@ -72,8 +72,7 @@ const ELEC = ['Included in rent', 'Own token meter', 'Shared meter', 'Prepaid'];
 const WIFI = ['Included in rent', 'Available but paid separately', 'Not available'];
 const GARBAGE = ['Included', 'Not included', 'Paid separately'];
 const BACKUP = ['None', 'Solar', 'Generator'];
-const BATH = ['Ensuite (own)', 'Shared', 'Communal'];
-const KITCHEN = ['Own', 'Shared', 'None — meals only'];
+const BATHS = ['1', '2', '3', '4+']; // bathroom COUNT — no more "shared/communal" hostel wording
 const TENANTS = ['Anyone', 'Family', 'Singles / couples', 'Working professionals'];
 const ROADS = ['Tarmac', 'Murram', 'Footpath only'];
 const SECURITY = ['Guard', 'Gate lock', 'CCTV'];
@@ -146,8 +145,9 @@ function amenityTags(l) {
   if (l.water === 'Included in rent') t.push('Water incl.');
   if (l.wifi === 'Included in rent') t.push('WiFi');
   if (l.elec === 'Included in rent') t.push('Power incl.');
-  if (l.bath === 'Ensuite (own)') t.push('Ensuite');
-  if (l.kitchen === 'Own') t.push('Own kitchen');
+  if (l.ensuite === 'Yes' || l.bath === 'Ensuite (own)') t.push('En-suite');
+  if (l.kitchen === 'Yes' || l.kitchen === 'Own') t.push('Own kitchen');
+  if (l.parking === 'Yes') t.push('Parking');
   if (l.backup && l.backup !== 'None') t.push(l.backup + ' backup');
   if (parseSecurity(l.security).includes('Guard')) t.push('Guard');
   return t.slice(0, 3).map(x => `<span class="mini-tag">${esc(x)}</span>`).join('');
@@ -283,39 +283,48 @@ function lightbox(src) {
   lb.onclick = () => { lb.hidden = true; };
 }
 
-// ---------- light / dark mode ----------
-// Stored per device in localStorage. The app ALWAYS launches in light mode —
-// dark mode is a choice the user makes, and it is saved on this device.
+// ---------- light / dark / system theme ----------
+// Three modes, like every other website: LIGHT, DARK, or SYSTEM (follows the
+// phone/computer setting and switches automatically). The choice is saved per device.
+// First-ever visitors get SYSTEM default — no saved choice means "match my device".
 const THEME_META = { light: '#0e5a33', dark: '#141713' };
-function applyTheme(t, save) {
-  t = t === 'dark' ? 'dark' : 'light';
+const THEME_NAMES = { light: 'Light mode', dark: 'Dark mode', system: 'System default' };
+const sysDark = () => { try { return !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches); } catch (e) { return false; } };
+function resolveTheme(mode) { return (mode === 'dark' || (mode !== 'light' && sysDark())) ? 'dark' : 'light'; }
+function applyTheme(mode, save) {
+  if (save) { try { localStorage.setItem('hl_theme', mode); } catch (e) {} }
+  const t = resolveTheme(mode);
   document.documentElement.dataset.theme = t;
-  if (save) { try { localStorage.setItem('hl_theme', t); } catch (e) {} }
   const m = document.querySelector('meta[name="theme-color"]');
   if (m) m.setAttribute('content', THEME_META[t]);
   // keep every toggle button on the page in sync (topbar, side nav, profile row).
-  // Rich rows (profile) keep their own markup — we only swap the icon + On/Off text.
+  // Rich rows (profile) keep their own markup — we only swap the icon + state text.
   document.querySelectorAll('[data-theme-toggle]').forEach(b => {
-    const dark = t === 'dark';
+    const ico = ic(mode === 'system' ? 'gear' : (t === 'dark' ? 'sun' : 'moon'));
     const st = b.querySelector('.theme-state');
     if (st) {
-      st.textContent = dark ? 'On' : 'Off';
+      st.textContent = mode === 'system' ? 'System' : (t === 'dark' ? 'Dark' : 'Light');
       const sv = b.querySelector('svg');
-      if (sv) sv.outerHTML = ic(dark ? 'sun' : 'moon');
+      if (sv) sv.outerHTML = ico;
     } else {
-      b.innerHTML = `${ic(dark ? 'sun' : 'moon')}<span class="theme-lbl">${dark ? 'Light mode' : 'Dark mode'}</span>`;
-      b.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+      b.innerHTML = `${ico}<span class="theme-lbl">${THEME_NAMES[mode] || THEME_NAMES.system}</span>`;
+      b.title = 'Theme: ' + (THEME_NAMES[mode] || THEME_NAMES.system) + ' — tap to change';
     }
   });
 }
 function currentTheme() {
   try {
     const saved = localStorage.getItem('hl_theme');
-    if (saved === 'dark' || saved === 'light') return saved;
+    if (saved === 'dark' || saved === 'light' || saved === 'system') return saved;
   } catch (e) {}
-  return 'light'; // always launch light — no system-preference fallback
+  return 'system'; // no choice made yet → follow the device's own setting
 }
-function toggleTheme() { applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true); }
+function toggleTheme() {
+  const order = ['light', 'dark', 'system'];
+  const next = order[(order.indexOf(currentTheme()) + 1) % order.length];
+  applyTheme(next, true);
+  toast('Theme: ' + THEME_NAMES[next]);
+}
 
 // ---------- admin notification badges ----------
 // The API returns one tiny row: how many verifications / boosts / reports are waiting.

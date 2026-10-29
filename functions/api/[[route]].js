@@ -137,9 +137,10 @@ CREATE TABLE IF NOT EXISTS listings (
   wifiProvider TEXT NOT NULL DEFAULT '',
   garbage TEXT NOT NULL DEFAULT 'Included',
   backup TEXT NOT NULL DEFAULT 'None',
-  bath TEXT NOT NULL DEFAULT 'Shared',
-  kitchen TEXT NOT NULL DEFAULT 'Shared',
-  cooking TEXT NOT NULL DEFAULT 'Yes',
+  bath TEXT NOT NULL DEFAULT '1',
+  ensuite TEXT NOT NULL DEFAULT 'No',
+  kitchen TEXT NOT NULL DEFAULT 'No',
+  parking TEXT NOT NULL DEFAULT 'No',
   balcony TEXT NOT NULL DEFAULT 'No',
   tile TEXT NOT NULL DEFAULT 'Tiled',
   ceiling TEXT NOT NULL DEFAULT 'Yes',
@@ -232,7 +233,7 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('gmaps_key','');
 `;
 
 let schemaReady = null;
-const SCHEMA_VER = '2';
+const SCHEMA_VER = '3';
 
 async function ensureSchema(env) {
   if (!schemaReady) {
@@ -254,6 +255,14 @@ async function ensureSchema(env) {
           try { await env.DB.prepare(`ALTER TABLE listings ADD COLUMN ${c} TEXT NOT NULL DEFAULT '${d}'`).run(); } catch (e) { /* column already exists */ }
         }
       }
+      if (ver < 3) {
+        // v3 — kitchen/bathroom "shared" hostel wording retired nationwide:
+        //   bath now stores a COUNT ('1','2','3','4+'); ensuite/kitchen/parking are Yes/No flags.
+        // Fresh installs already have these columns from SCHEMA above, so the ALTERs no-op via catch.
+        for (const [c, d] of [['ensuite', 'No'], ['parking', 'No']]) {
+          try { await env.DB.prepare(`ALTER TABLE listings ADD COLUMN ${c} TEXT NOT NULL DEFAULT '${d}'`).run(); } catch (e) { /* column already exists */ }
+        }
+      }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_ver','" + SCHEMA_VER + "')").run();
     })().catch(e => { schemaReady = null; throw e; });
   }
@@ -263,8 +272,8 @@ async function ensureSchema(env) {
 // ---------- listing field mapping (camelCase = D1 columns) ----------
 const LSTR = ['title', 'ptype', 'furnishing', 'floor', 'town', 'area', 'landmark', 'road', 'period', 'terms',
   'water', 'waterCost', 'waterSched', 'elec', 'elecCost', 'wifiCost', 'wifiProvider', 'garbage', 'backup',
-  'bath', 'kitchen', 'cooking', 'tenantPref', 'availableFrom', 'contactPhone'];
-const LYNN = ['waterTank', 'negotiable', 'balcony', 'tile', 'ceiling', 'wardrobe', 'bed', 'hotShower', 'pets'];
+  'bath', 'tenantPref', 'availableFrom', 'contactPhone'];
+const LYNN = ['waterTank', 'negotiable', 'balcony', 'tile', 'ceiling', 'wardrobe', 'hotShower', 'pets', 'ensuite', 'kitchen', 'parking'];
 const LNUM = ['units', 'rent', 'deposit'];
 
 function listingCols(b, base) {
@@ -303,7 +312,7 @@ async function attachThumbs(env, rows, keyField = 'id', outField = 'thumb') {
 }
 
 const CARD_COLS = `l.id, l.title, l.ptype, l.units, l.rent, l.period, l.town, l.area, l.landmark, l.lat, l.lng,
-  l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.backup, l.garbage, l.tenantPref, l.availableFrom,
+  l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.ensuite, l.parking, l.backup, l.garbage, l.tenantPref, l.availableFrom,
   l.status, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
 
 function like(v) { return '%' + S(v).replace(/[%_]/g, ' ') + '%'; }
@@ -329,8 +338,9 @@ async function queryListings(env, url, opts = {}) {
     if (a === 'water') add("l.water = 'Included in rent'");
     else if (a === 'elec') add("l.elec = 'Included in rent'");
     else if (a === 'wifi') add("l.wifi = 'Included in rent'");
-    else if (a === 'ensuite') add("l.bath = 'Ensuite (own)'");
-    else if (a === 'kitchen') add("l.kitchen = 'Own'");
+    else if (a === 'ensuite') add("(l.ensuite = 'Yes' OR l.bath = 'Ensuite (own)')");
+    else if (a === 'kitchen') add("l.kitchen IN ('Yes', 'Own')");
+    else if (a === 'parking') add("l.parking = 'Yes'");
     else if (a === 'guard') add("l.security LIKE '%Guard%'");
     else if (a === 'backup') add("l.backup != 'None'");
   }

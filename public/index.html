@@ -12,9 +12,12 @@
 <meta name="google-site-verification" content="itMaFFWxjolLNCsfI4OfAaM8dRq-MCxghODhqdxGh1Q" />
 <meta name="theme-color" content="#0e5a33">
 <script>
-// apply the saved theme before the stylesheet paints — HomeLinkKE always LAUNCHES in light mode
-// (dark mode is opt-in via the toggle and is saved on this device)
-(function(){try{var t=localStorage.getItem('hl_theme');if(t!=='dark'&&t!=='light')t='light';document.documentElement.dataset.theme=t;}catch(e){}})();
+// apply the theme before the stylesheet paints. Like every other website:
+// a saved choice (light/dark) wins, otherwise the site follows the DEVICE's
+// own light/dark setting (system default) and switches automatically.
+(function(){try{var t=localStorage.getItem('hl_theme');
+if(t!=='dark'&&t!=='light')t=(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)?'dark':'light';
+document.documentElement.dataset.theme=t;}catch(e){}})();
 </script>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icons/icon-192.png">

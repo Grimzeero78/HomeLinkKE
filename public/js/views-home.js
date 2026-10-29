@@ -118,8 +118,9 @@ async function viewSearch() {
       <h3>Amenities</h3>
       <label class="check"><input type="checkbox" data-a="water" ${SEARCH.amenities.includes('water') ? 'checked' : ''}> Water included</label>
       <label class="check"><input type="checkbox" data-a="wifi" ${SEARCH.amenities.includes('wifi') ? 'checked' : ''}> WiFi included</label>
-      <label class="check"><input type="checkbox" data-a="ensuite" ${SEARCH.amenities.includes('ensuite') ? 'checked' : ''}> Ensuite bathroom</label>
+      <label class="check"><input type="checkbox" data-a="ensuite" ${SEARCH.amenities.includes('ensuite') ? 'checked' : ''}> Own bathroom (en-suite)</label>
       <label class="check"><input type="checkbox" data-a="kitchen" ${SEARCH.amenities.includes('kitchen') ? 'checked' : ''}> Own kitchen</label>
+      <label class="check"><input type="checkbox" data-a="parking" ${SEARCH.amenities.includes('parking') ? 'checked' : ''}> Parking</label>
       <label class="check"><input type="checkbox" data-a="guard" ${SEARCH.amenities.includes('guard') ? 'checked' : ''}> Security guard</label>
       <label class="check"><input type="checkbox" data-a="backup" ${SEARCH.amenities.includes('backup') ? 'checked' : ''}> Backup power</label>
       <h3>Sort by</h3>

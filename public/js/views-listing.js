@@ -94,15 +94,15 @@ async function viewListing(id) {
         ${kv('Backup power', esc(l.backup))}
       </div>
 
-      <div class="sec-block"><h3>Room & building</h3>
-        ${kv('Bathroom', esc(l.bath))}
-        ${kv('Kitchen', esc(l.kitchen))}
-        ${kv('Cooking allowed', y(l.cooking))}
+      <div class="sec-block"><h3>Inside the unit</h3>
+        ${/^\d/.test(l.bath || '') ? kv('Bathrooms', esc(l.bath)) : ''}
+        ${(l.ensuite === 'Yes' || l.bath === 'Ensuite (own)') ? kv('Own bathroom', 'Yes — en-suite') : ''}
+        ${(l.kitchen === 'Yes' || l.kitchen === 'Own') ? kv('Own kitchen', 'Yes, inside the unit') : ''}
+        ${l.parking === 'Yes' ? kv('Parking', 'Available') : ''}
         ${kv('Balcony', y(l.balcony))}
         ${kv('Floor finish', y(l.tile))}
         ${kv('Ceiling', y(l.ceiling))}
-        ${kv('Wardrobe', y(l.wardrobe))}
-        ${kv('Bed provided', y(l.bed))}
+        ${l.wardrobe === 'Yes' ? kv('Wardrobes', 'Built-in') : ''}
         ${kv('Hot shower', y(l.hotShower))}
       </div>
 

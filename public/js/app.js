@@ -107,7 +107,13 @@ async function refreshUnread() {
 
 // ---------- boot ----------
 (async function boot() {
-  applyTheme(currentTheme()); // before first paint of the shell — no light flash for dark users
+  applyTheme(currentTheme()); // before first paint of the shell — respects the saved light/dark/system choice
+  // in "system" mode, follow the device's own light/dark setting live (no reload needed)
+  try {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+      if (currentTheme() === 'system') applyTheme('system');
+    });
+  } catch (e) { /* old browser — the choice simply applies on next load */ }
   // one delegated handler runs every theme button on any page (topbar, side nav, profile)
   document.addEventListener('click', e => {
     if (e.target.closest('[data-theme-toggle]')) { e.preventDefault(); toggleTheme(); }

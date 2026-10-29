@@ -216,11 +216,11 @@ async function viewProfile(edit) {
     </div>
     <div class="plabel">Settings</div>
     <div class="prowbox">
-      <button class="prow" data-theme-toggle type="button">${ic('moon')}<span class="mid"><b>Dark mode <span class="theme-state">Off</span></b><small>Easy on the eyes at night — saved on this device</small></span></button>
+      <button class="prow" data-theme-toggle type="button">${ic('gear')}<span class="mid"><b>Theme <span class="theme-state">System</span></b><small>Light, dark, or follow this device's setting</small></span></button>
       <button class="prow danger" id="pf-out">${ic('out')}<span class="mid"><b>Sign out</b><small>End this session on this device</small></span></button>
     </div>`;
   v.appendChild(tools);
-  applyTheme(document.documentElement.dataset.theme); // sync the toggle labels/state
+  applyTheme(currentTheme()); // sync the toggle labels/state (light / dark / system)
 
   tools.querySelector('#pf-out').onclick = async () => {
     await api('/logout', { method: 'POST' });
