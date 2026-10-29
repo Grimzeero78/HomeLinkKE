@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HomeLinkKE — Houses, Apartments & Rentals across Kenya</title>
+<meta name="description" content="Find vacant houses, bedsitters and apartments anywhere in Kenya. Chat with landlords directly, see houses near you on the map. Never pay before viewing.">
+<meta property="og:title" content="HomeLinkKE — Find a house anywhere in Kenya">
+<meta property="og:description" content="Vacant houses, bedsitters and apartments across Kenya. Chat with landlords directly. See what is near you. Never pay before viewing.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/icons/icon-192.png">
+<meta name="theme-color" content="#0e5a33">
+<script>
+// apply the saved (or system) theme before the stylesheet paints — no light flash
+(function(){try{var t=localStorage.getItem('hl_theme');if(t!=='dark'&&t!=='light')t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}})();
+</script>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div id="splash" aria-hidden="true"><div class="splash-card"><img class="splash-logo" src="/icons/icon-192.png" alt=""><span class="splash-word">HOMELINK<b>KE</b></span></div></div>
+<div class="app">
+  <aside class="sidenav" id="sidenav">
+    <a class="brand" href="#/home">
+      <img class="brand-logo" src="/icons/icon-192.png" alt="">
+      <span class="brand-word">HOMELINK<b>KE</b></span>
+    </a>
+    <nav id="sidenav-links" class="side-links"></nav>
+    <button class="prow theme-prow" data-theme-toggle type="button"></button>
+    <div id="sidenav-foot" class="side-foot"></div>
+  </aside>
+
+  <header class="topbar">
+    <a class="brand-m" href="#/home"><img class="brand-logo-sm" src="/icons/icon-192.png" alt="">HOMELINK<b>KE</b></a>
+    <div class="top-right">
+      <button class="theme-btn" data-theme-toggle type="button" aria-label="Toggle dark mode"></button>
+      <div id="top-actions" class="top-acts"></div>
+    </div>
+  </header>
+
+  <main id="view" class="view"></main>
+
+  <nav id="bottomnav" class="bottomnav"></nav>
+</div>
+
+<div id="modal-root"></div>
+<div id="lightbox" class="lightbox" hidden><img id="lightbox-img" alt=""></div>
+<div id="toast" class="toast" hidden></div>
+
+<script src="/js/api.js"></script>
+<script src="/js/ui.js"></script>
+<script src="/js/maps.js"></script>
+<script src="/js/views-home.js"></script>
+<script src="/js/views-map.js"></script>
+<script src="/js/views-listing.js"></script>
+<script src="/js/views-auth.js"></script>
+<script src="/js/views-create.js"></script>
+<script src="/js/views-chat.js"></script>
+<script src="/js/views-landlord.js"></script>
+<script src="/js/views-admin.js"></script>
+<script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "chukahomes",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ChukaHomes — student housing finder for Chuka, Kenya. Static frontend + Cloudflare Pages Functions + D1.",
+  "scripts": {
+    "dev": "wrangler pages dev public --d1 DB=chukahomes-db --persist-to .wrangler/state --port 8788",
+    "schema": "wrangler d1 execute chukahomes-db --local --file schema.sql --persist-to .wrangler/state"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
