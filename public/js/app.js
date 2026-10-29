@@ -27,6 +27,7 @@ const ROUTES = [
   [/^edit\/(\d+)$/i, m => viewCreate(+m[1])],
   [/^(login|register)$/i, m => viewAuth(m[1].toLowerCase())],
   [/^setup$/i, () => viewSetup()],
+  [/^welcome$/i, () => viewWelcome()],
   [/^profile$/i, () => viewProfile()],
   [/^favorites$/i, () => viewFavorites()],
   [/^mylistings$/i, () => viewMyListings()],

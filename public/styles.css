@@ -473,3 +473,8 @@ html[data-theme="dark"] .badge-boost,html[data-theme="dark"] .bn-badge,html[data
 /* MAPS STAY WHITE IN DARK MODE (owner request): the Google map keeps its normal
    light look in both themes — no tile inversion, no dark popups. Accuracy and
    readability of the real map beat theme consistency, so no dark overrides here. */
+
+/* ---------- first-time welcome guide ---------- */
+.guide-list{margin:8px 0 0;padding-left:20px;display:grid;gap:9px;font-size:14px;color:var(--ink2,#444)}
+.guide-list li{line-height:1.45;padding-left:2px}
+.guide-list li::marker{color:var(--green,#0e5a33);font-weight:700}

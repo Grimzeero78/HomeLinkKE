@@ -1,5 +1,5 @@
 // HomeLinkKE — shared UI helpers, constants, icons
-const TYPES = ['Bedsitter', 'Single Room', 'Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom', '4+ Bedroom', 'Bungalow', 'Maisonette', 'Hostel'];
+const TYPES = ['Bedsitter', 'Single Room', 'Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom', '4+ Bedroom', 'Bungalow', 'Maisonette'];
 // Kenya gazetteer — the towns the app browses, targets boosts and searches first.
 // Coordinates are town-centre approximations (the exact spot always comes from the
 // landlord's map pin or the renter's GPS). big:1 = shown as a chip on the home page.
@@ -74,8 +74,7 @@ const GARBAGE = ['Included', 'Not included', 'Paid separately'];
 const BACKUP = ['None', 'Solar', 'Generator'];
 const BATH = ['Ensuite (own)', 'Shared', 'Communal'];
 const KITCHEN = ['Own', 'Shared', 'None — meals only'];
-const GENDER = ['Male only', 'Female only', 'Mixed'];
-const VISITORS = ['Yes', 'Daytime only', 'No'];
+const TENANTS = ['Anyone', 'Family', 'Singles / couples', 'Working professionals'];
 const ROADS = ['Tarmac', 'Murram', 'Footpath only'];
 const SECURITY = ['Guard', 'Gate lock', 'CCTV'];
 const FLOORS = ['Ground', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
@@ -285,7 +284,8 @@ function lightbox(src) {
 }
 
 // ---------- light / dark mode ----------
-// Stored per device in localStorage; first visit follows the phone/PC system setting.
+// Stored per device in localStorage. The app ALWAYS launches in light mode —
+// dark mode is a choice the user makes, and it is saved on this device.
 const THEME_META = { light: '#0e5a33', dark: '#141713' };
 function applyTheme(t, save) {
   t = t === 'dark' ? 'dark' : 'light';
@@ -312,9 +312,8 @@ function currentTheme() {
   try {
     const saved = localStorage.getItem('hl_theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
   } catch (e) {}
-  return 'light';
+  return 'light'; // always launch light — no system-preference fallback
 }
 function toggleTheme() { applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true); }
 

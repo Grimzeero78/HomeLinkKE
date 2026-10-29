@@ -145,13 +145,10 @@ CREATE TABLE IF NOT EXISTS listings (
   ceiling TEXT NOT NULL DEFAULT 'Yes',
   wardrobe TEXT NOT NULL DEFAULT 'No',
   bed TEXT NOT NULL DEFAULT 'No',
-  desk TEXT NOT NULL DEFAULT 'No',
+  hotShower TEXT NOT NULL DEFAULT 'No',
   security TEXT NOT NULL DEFAULT '[]',
-  gender TEXT NOT NULL DEFAULT 'Mixed',
-  curfewOn TEXT NOT NULL DEFAULT 'No',
-  curfewTime TEXT NOT NULL DEFAULT '',
-  visitors TEXT NOT NULL DEFAULT 'Daytime only',
-  alcohol TEXT NOT NULL DEFAULT 'No',
+  tenantPref TEXT NOT NULL DEFAULT 'Anyone',
+  pets TEXT NOT NULL DEFAULT 'No',
   availableFrom TEXT NOT NULL DEFAULT '',
   contactPhone TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'AVAILABLE',
@@ -235,7 +232,7 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('gmaps_key','');
 `;
 
 let schemaReady = null;
-const SCHEMA_VER = '1';
+const SCHEMA_VER = '2';
 
 async function ensureSchema(env) {
   if (!schemaReady) {
@@ -250,6 +247,13 @@ async function ensureSchema(env) {
           .split(';').map(s => s.trim()).filter(Boolean);
         for (const st of stmts) await env.DB.prepare(st).run();
       }
+      if (ver < 2) {
+        // v2 — nationwide fields replace the old hostel-style ones (gender/curfew/visitors/alcohol/desk).
+        // Fresh installs already have these columns from SCHEMA above, so the ALTERs no-op via catch.
+        for (const [c, d] of [['tenantPref', 'Anyone'], ['pets', 'No'], ['hotShower', 'No']]) {
+          try { await env.DB.prepare(`ALTER TABLE listings ADD COLUMN ${c} TEXT NOT NULL DEFAULT '${d}'`).run(); } catch (e) { /* column already exists */ }
+        }
+      }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_ver','" + SCHEMA_VER + "')").run();
     })().catch(e => { schemaReady = null; throw e; });
   }
@@ -259,8 +263,8 @@ async function ensureSchema(env) {
 // ---------- listing field mapping (camelCase = D1 columns) ----------
 const LSTR = ['title', 'ptype', 'furnishing', 'floor', 'town', 'area', 'landmark', 'road', 'period', 'terms',
   'water', 'waterCost', 'waterSched', 'elec', 'elecCost', 'wifiCost', 'wifiProvider', 'garbage', 'backup',
-  'bath', 'kitchen', 'cooking', 'gender', 'curfewTime', 'visitors', 'alcohol', 'availableFrom', 'contactPhone'];
-const LYNN = ['waterTank', 'negotiable', 'balcony', 'tile', 'ceiling', 'wardrobe', 'bed', 'desk', 'curfewOn'];
+  'bath', 'kitchen', 'cooking', 'tenantPref', 'availableFrom', 'contactPhone'];
+const LYNN = ['waterTank', 'negotiable', 'balcony', 'tile', 'ceiling', 'wardrobe', 'bed', 'hotShower', 'pets'];
 const LNUM = ['units', 'rent', 'deposit'];
 
 function listingCols(b, base) {
@@ -299,7 +303,7 @@ async function attachThumbs(env, rows, keyField = 'id', outField = 'thumb') {
 }
 
 const CARD_COLS = `l.id, l.title, l.ptype, l.units, l.rent, l.period, l.town, l.area, l.landmark, l.lat, l.lng,
-  l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.backup, l.garbage, l.gender, l.availableFrom,
+  l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.backup, l.garbage, l.tenantPref, l.availableFrom,
   l.status, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
 
 function like(v) { return '%' + S(v).replace(/[%_]/g, ' ') + '%'; }
@@ -320,8 +324,6 @@ async function queryListings(env, url, opts = {}) {
   const min = N(q.get('min')), max = N(q.get('max'));
   if (min > 0) add('l.rent >= ?', min);
   if (max > 0) add('l.rent <= ?', max);
-  const g = S(q.get('gender'));
-  if (g && g !== 'Mixed') add("l.gender IN ('Mixed', ?)", g);
   if (opts.mine && S(q.get('status'))) add('l.status = ?', S(q.get('status')));
   for (const a of S(q.get('amenities')).split(',')) {
     if (a === 'water') add("l.water = 'Included in rent'");

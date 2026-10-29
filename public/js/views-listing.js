@@ -103,17 +103,15 @@ async function viewListing(id) {
         ${kv('Ceiling', y(l.ceiling))}
         ${kv('Wardrobe', y(l.wardrobe))}
         ${kv('Bed provided', y(l.bed))}
-        ${kv('Study desk', y(l.desk))}
+        ${kv('Hot shower', y(l.hotShower))}
       </div>
 
-      <div class="sec-block"><h3>Security & rules</h3>
+      <div class="sec-block"><h3>Security & tenants</h3>
         <div class="chips" style="margin-bottom:10px">
           ${(parseSecurity(l.security).length ? parseSecurity(l.security) : ['Not specified']).map(s => `<span class="chip" style="pointer-events:none">${esc(s)}</span>`).join('')}
         </div>
-        ${kv('Gender', esc(l.gender))}
-        ${kv('Curfew', l.curfewOn === 'Yes' ? 'Yes · from ' + esc(l.curfewTime) : 'No')}
-        ${kv('Visitors', esc(l.visitors))}
-        ${kv('Alcohol', y(l.alcohol))}
+        ${kv('Preferred tenants', esc(l.tenantPref || 'Anyone'))}
+        ${kv('Pets', y(l.pets))}
       </div>
 
       <div class="sec-block"><h3>Pricing & terms</h3>

@@ -1,0 +1,8 @@
+name = "homelinkke"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "public"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "homelinkke-db"
+database_id = "472e15d2-b630-4086-b6d6-42ec30833d7e"

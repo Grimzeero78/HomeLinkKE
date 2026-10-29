@@ -1,5 +1,5 @@
 // HomeLinkKE — Home + Search views
-const SEARCH = { q: '', town: '', ptype: '', min: '', max: '', gender: '', furnishing: '', amenities: [], sort: 'new' };
+const SEARCH = { q: '', town: '', ptype: '', min: '', max: '', furnishing: '', amenities: [], sort: 'new' };
 
 async function viewHome() {
   const v = document.getElementById('view');
@@ -115,7 +115,6 @@ async function viewSearch() {
       <h3>Property type</h3><div class="chips" id="f-type">${['<button class="chip" data-v="">Any</button>'].concat(TYPES.map(t => `<button class="chip" data-v="${esc(t)}">${esc(t)}</button>`)).join('')}</div>
       <h3>Price (KES)</h3>
       <div style="display:flex;gap:8px"><input class="inp" id="f-min" type="number" placeholder="Min" value="${esc(SEARCH.min)}"><input class="inp" id="f-max" type="number" placeholder="Max" value="${esc(SEARCH.max)}"></div>
-      <h3>Gender</h3><div class="chips" id="f-gender">${['<button class="chip" data-v="">Any</button>'].concat(GENDER.map(g => `<button class="chip" data-v="${esc(g)}">${esc(g)}</button>`)).join('')}</div>
       <h3>Amenities</h3>
       <label class="check"><input type="checkbox" data-a="water" ${SEARCH.amenities.includes('water') ? 'checked' : ''}> Water included</label>
       <label class="check"><input type="checkbox" data-a="wifi" ${SEARCH.amenities.includes('wifi') ? 'checked' : ''}> WiFi included</label>
@@ -159,7 +158,7 @@ async function viewSearch() {
     else SEARCH.amenities = SEARCH.amenities.filter(x => x !== a);
     load();
   });
-  sel('#f-town', 'town'); sel('#f-type', 'ptype'); sel('#f-gender', 'gender');
+  sel('#f-town', 'town'); sel('#f-type', 'ptype');
 
   async function load() {
     const params = new URLSearchParams();
@@ -168,7 +167,6 @@ async function viewSearch() {
     if (SEARCH.ptype) params.set('ptype', SEARCH.ptype);
     if (SEARCH.min) params.set('min', SEARCH.min);
     if (SEARCH.max) params.set('max', SEARCH.max);
-    if (SEARCH.gender) params.set('gender', SEARCH.gender);
     if (SEARCH.amenities.length) params.set('amenities', SEARCH.amenities.join(','));
     params.set('sort', SEARCH.sort === 'near' ? 'new' : SEARCH.sort);
     params.set('bt', SEARCH.town || getMyTown()); // boosts target the town being browsed

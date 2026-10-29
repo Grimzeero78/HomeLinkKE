@@ -7,12 +7,12 @@ const LBLANK = () => ({
   elec: 'Own token meter', elecCost: '', wifi: 'Not available', wifiCost: '', wifiProvider: '',
   garbage: 'Included', backup: 'None',
   bath: 'Shared', kitchen: 'Shared', cooking: 'Yes', balcony: 'No', tile: 'Tiled', ceiling: 'Yes',
-  wardrobe: 'No', bed: 'No', desk: 'No',
-  security: [], gender: 'Mixed', curfewOn: 'No', curfewTime: '', visitors: 'Daytime only', alcohol: 'No',
+  wardrobe: 'No', bed: 'No', hotShower: 'No',
+  security: [], tenantPref: 'Anyone', pets: 'No',
   availableFrom: 'Available now', contactPhone: '', photos: [], thumbs: [],
 });
 
-const WIZ_STEPS = ['Basics', 'Location', 'Pricing', 'Utilities', 'Room', 'Rules', 'Availability', 'Photos'];
+const WIZ_STEPS = ['Basics', 'Location', 'Pricing', 'Utilities', 'Room', 'Tenants', 'Availability', 'Photos'];
 
 async function viewCreate(id) {
   if (!state.user) { location.hash = '#/login'; return; }
@@ -113,15 +113,12 @@ async function viewCreate(id) {
       ${yesNo('ceiling', 'Ceiling board?')}
       ${yesNo('wardrobe', 'Wardrobe provided?')}
       ${yesNo('bed', 'Bed provided?')}
-      ${yesNo('desk', 'Study desk provided?')}` },
-    { t: 'Security & rules', html: () => `
+      ${yesNo('hotShower', 'Hot shower?')}` },
+    { t: 'Security & tenants', html: () => `
       <label class="lbl">Security (choose all that apply)</label>
       <div class="chips" id="w-sec">${SECURITY.map(s => `<button type="button" class="chip ${L.security.includes(s) ? 'on' : ''}" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
-      ${sel('gender', 'Gender policy', GENDER)}
-      ${yesNo('curfewOn', 'Is there a curfew?')}
-      <div id="w-curfew-box">${txt('curfewTime', 'Curfew time', 'e.g. 10:30 PM')}</div>
-      ${sel('visitors', 'Visitors allowed?', VISITORS)}
-      ${yesNo('alcohol', 'Alcohol allowed in the compound?')}` },
+      ${sel('tenantPref', 'Preferred tenants (optional)', TENANTS, 'Who the house suits best — leave as Anyone if there is no preference')}
+      ${yesNo('pets', 'Pets allowed?')}` },
     { t: 'Availability & contact', html: () => `
       <label class="lbl">Available from</label>
       <select class="inp" id="w-avail">${AVAIL_OPTIONS.map(o => `<option ${L.availableFrom === o || (!AVAIL_OPTIONS.includes(L.availableFrom) && o === 'Available now' && !L.availableFrom) ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>
@@ -198,8 +195,6 @@ async function viewCreate(id) {
     if (wifisel) wifisel.addEventListener('change', syncUtilBoxes);
     const schedBox = v.querySelector('#w-sched-box');
     if (schedBox) { schedBox.style.display = L.water === 'Rationed' ? '' : 'none'; if (wsel) wsel.addEventListener('change', () => schedBox.style.display = L.water === 'Rationed' ? '' : 'none'); }
-    const cfBox = v.querySelector('#w-curfew-box'); if (cfBox) cfBox.style.display = L.curfewOn === 'Yes' ? '' : 'none';
-    const co = v.querySelector('[data-k="curfewOn"]'); if (co) co.addEventListener('click', () => setTimeout(() => cfBox.style.display = L.curfewOn === 'Yes' ? '' : 'none', 0));
     // ---- availability: preset options, date only when picked ----
     const availSel = v.querySelector('#w-avail'), availDate = v.querySelector('#w-avail-date');
     if (availSel && availDate) {
@@ -354,7 +349,7 @@ async function viewCreate(id) {
         ['Rent', L.rent ? kes(L.rent) + ' / ' + (L.period || '').toLowerCase() : ''],
         ['Deposit', L.deposit ? kes(L.deposit) : 'None'],
         ['Water', L.water], ['Electricity', L.elec], ['WiFi', L.wifi], ['Bathroom', L.bath],
-        ['Gender', L.gender], ['Available', L.availableFrom || 'Now'], ['Photos', L.photos.length + ' added'],
+        ['Preferred tenants', L.tenantPref], ['Pets', L.pets], ['Available', L.availableFrom || 'Now'], ['Photos', L.photos.length + ' added'],
       ];
       rv.innerHTML = rows.filter(r2 => r2[1]).map(r2 => `<div class="rev-row"><span class="k">${r2[0]}</span><span class="v">${esc(r2[1])}</span></div>`).join('');
     }
@@ -373,7 +368,6 @@ async function viewCreate(id) {
     if (L.water !== 'Rationed') L.waterSched = '';
     if (L.elec === 'Included in rent' || L.elec === 'Own token meter' || L.elec === 'Prepaid') L.elecCost = '';
     if (L.wifi !== 'Available but paid separately') L.wifiCost = '';
-    if (L.curfewOn !== 'Yes') L.curfewTime = '';
     if (L.availableFrom === 'Pick a date…' && !/^\d{4}-\d{2}-\d{2}/.test(L.availableFrom || '')) L.availableFrom = 'Available now';
     // make sure every photo has a small thumb (older edits load photos without one)
     for (let i = 0; i < L.photos.length; i++) {

@@ -1,13 +1,14 @@
 // HomeLinkKE — Login / Register / Setup / Profile
 function authRedirect() { location.hash = state.user && state.user.role === 'ADMIN' ? '#/admin' : '#/home'; }
 
-async function afterAuth(res) {
+// target: optional hash to go to after auth — registration sends new users to the welcome guide
+async function afterAuth(res, target) {
   if (!res.ok) { toast(res.error, true); return; }
   token.set(res.token);
   state.user = res.user;
   buildNav();
   toast('Welcome, ' + (res.user.name || res.user.username) + '!');
-  authRedirect();
+  if (target) location.hash = target; else authRedirect();
   maybeStudentCaution();
 }
 
@@ -101,7 +102,7 @@ function wireReg(v) {
       }
     });
     btn.disabled = false;
-    afterAuth(res);
+    afterAuth(res, '#/welcome');
   };
 }
 
@@ -210,6 +211,7 @@ async function viewProfile(edit) {
         + prow('plus', 'Post a new listing', 'Free plan: 2 listings · verified: 5', '#/new') : ''}
       ${admRow}
       ${prow('heart', 'Favourites', 'Rooms you saved for later', '#/favorites')}
+      ${prow('doc', 'Getting started guide', 'How it works — the guide from your first day', '#/welcome')}
       ${prow('shield', 'Privacy & safety', 'How HomeLinkKE handles your data', '#/privacy')}
     </div>
     <div class="plabel">Settings</div>
@@ -282,4 +284,61 @@ function wireVerifyCard(v) {
     if (res.ok) { toast('Submitted! The admin will review your documents.'); state.user.verifyStatus = 'PENDING'; viewProfile(); }
     else toast(res.error, true);
   };
+}
+
+// ---------- first-time welcome & guide (shown right after creating an account) ----------
+// Role-aware: seekers get the anti-scam warning + how it works; landlords get the
+// verify → post → boost guide. Reachable any time from Profile → Getting started.
+function viewWelcome() {
+  const v = document.getElementById('view');
+  const isLL = state.user && state.user.role === 'LANDLORD';
+  const hi = state.user && state.user.name ? ', ' + esc(state.user.name.split(' ')[0]) : '';
+  const seeker = `
+    <div class="notice notice-o" style="margin-top:14px">
+      ${ic('shield')}<span><b>Never send money before you SEE the house.</b>
+      No deposit, no booking fee, no reservation — nothing. Visit the house first, then pay the landlord directly.</span>
+    </div>
+    <div class="sec-block"><h3>How HomeLinkKE works</h3>
+      <ol class="guide-list">
+        <li><b>Search</b> — type a town in the search bar, or tap <b>Use my location</b> to see vacant houses nearest to you first.</li>
+        <li><b>Open &amp; compare</b> — check the photos, rent, deposit, water and electricity on every listing before you chat.</li>
+        <li><b>Chat</b> — message the landlord in the app or on WhatsApp. Ask anything — when to view, what is included.</li>
+        <li><b>Visit &amp; view</b> — go see the house in daylight, ideally with a friend. A real landlord will welcome this.</li>
+        <li><b>Pay only after viewing</b> — deposit and rent go directly to the landlord, never through HomeLinkKE.</li>
+      </ol>
+    </div>
+    <div class="sec-block"><h3>Red flags — walk away</h3>
+      <ul class="guide-list">
+        <li>Anyone rushing you to send M-Pesa for a house you have not seen.</li>
+        <li>“Pay first to book” stories, or rent too cheap for that area.</li>
+        <li>Refusing a video call or a physical viewing.</li>
+      </ul>
+      <p class="hint-t">See a fake listing? Open it and tap <b>Report</b> — every report is reviewed by the admin.</p>
+    </div>
+    <a class="btn btn-green btn-block" href="#/home">${ic('pin')} Find houses near me</a>`;
+  const landlord = `
+    <div class="sec-block"><h3>Your 4 steps to renting out faster</h3>
+      <ol class="guide-list">
+        <li><b>Get verified</b> — Profile → verification: upload your ID and an ownership photo. The admin approves it, you earn the green badge and <b>5 listings instead of 2</b>. Renters trust the badge — verified landlords get more chats.</li>
+        <li><b>Post your house</b> — tap <b>Post a new listing</b>: 8 quick steps. Pick the town, pin your exact gate on the Google map, add 3+ clear daylight photos.</li>
+        <li><b>Boost for KES ${BOOST.amountKes}</b> — your listing sits at the <b>top for ${BOOST.days} days</b> for every renter browsing your town. Pay by M-Pesa, enter the code, and the admin turns it on.</li>
+        <li><b>Reply fast</b> — houses whose landlord answers quickly rent much faster. Chats land in your Chats tab.</li>
+      </ol>
+    </div>
+    <div class="notice notice-g" style="margin-top:14px">
+      ${ic('shield')}<span><b>Be the landlord renters trust:</b> never ask for money before a viewing, and meet tenants at the house in daylight. HomeLinkKE never collects money on your behalf.</span>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <a class="btn btn-green" style="flex:1" href="#/new">${ic('plus')} Post my first house</a>
+      <a class="btn btn-outline" style="flex:1" href="#/profile">${ic('shield')} Verify me</a>
+    </div>`;
+  v.innerHTML = `
+    <div class="auth-wrap" style="max-width:640px"><div class="auth-card">
+      <div class="auth-brand">
+        <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinkKE" width="54" height="54">
+        <div class="auth-name">Welcome to Home<b>Link</b>KE${hi}!</div>
+        <p class="auth-tag">${isLL ? 'Your account is ready — here is how to rent out fast and safe.' : 'Your account is ready — here is how to find a house safely.'}</p>
+      </div>
+      ${isLL ? landlord : seeker}
+    </div></div>`;
 }
