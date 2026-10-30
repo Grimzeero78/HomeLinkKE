@@ -1,4 +1,4 @@
-// HomeLinkKE — Explore map: real Google Maps tiles (roads, estates, shops all
+// HomeLinKE — Explore map: real Google Maps tiles (roads, estates, shops all
 // labelled) with every pinned house shown as a price chip. Tap a house in the
 // side list (or a pin on the map) to see its exact spot and open the listing.
 // This page IS a map, so one finger pans the map here — but embedded maps

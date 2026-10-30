@@ -1,4 +1,4 @@
-// HomeLinkKE — Home + Search views
+// HomeLinKE — Home + Search views
 const SEARCH = { q: '', town: '', ptype: '', min: '', max: '', furnishing: '', amenities: [], sort: 'new' };
 
 async function viewHome() {
@@ -21,14 +21,14 @@ async function viewHome() {
     <div class="sec" id="home-boosted"></div>
     <div class="sec" id="home-newest"></div>
     <div class="sec">
-      <div class="sec-h"><h2>How HomeLinkKE works</h2></div>
+      <div class="sec-h"><h2>How HomeLinKE works</h2></div>
       <div class="steps3">
         <div class="stepcard"><div class="step-n">1</div><div><h3>Search & compare</h3><p>Real prices, real photos, exact map pins — in Nairobi, Mombasa, Nanyuki or any town in Kenya.</p></div></div>
         <div class="stepcard"><div class="step-n">2</div><div><h3>Chat with the landlord</h3><p>Message in the app or tap WhatsApp — agree on a viewing time. No agents, no middlemen.</p></div></div>
-        <div class="stepcard"><div class="step-n">3</div><div><h3>View first, pay later</h3><p>Never send money before you have seen the house in person. That is the HomeLinkKE rule.</p></div></div>
+        <div class="stepcard"><div class="step-n">3</div><div><h3>View first, pay later</h3><p>Never send money before you have seen the house in person. That is the HomeLinKE rule.</p></div></div>
       </div>
     </div>
-    <div class="sec"><div class="notice notice-g">${ic('shield')}<span>HomeLinkKE never collects rent. Any payment happens face-to-face with the landlord after a viewing. Report anything suspicious.</span></div></div>
+    <div class="sec"><div class="notice notice-g">${ic('shield')}<span>HomeLinKE never collects rent. Any payment happens face-to-face with the landlord after a viewing. Report anything suspicious.</span></div></div>
     <div class="sec" id="home-cta"></div>`;
 
   const go = q => { SEARCH.q = q; SEARCH.town = ''; location.hash = '#/search'; };
@@ -41,7 +41,7 @@ async function viewHome() {
   if (!hasPos && !myTown) {
     nearEl.innerHTML = `<div class="sec-block" style="text-align:center;padding:20px 16px">
       <h3 style="font-size:16px">${ic('pin')} Houses around you</h3>
-      <p class="hint-t" style="margin:6px 0 12px">Allow location and HomeLinkKE shows vacant houses nearest to you first — in any town.</p>
+      <p class="hint-t" style="margin:6px 0 12px">Allow location and HomeLinKE shows vacant houses nearest to you first — in any town.</p>
       <button class="btn btn-primary" id="nb-ask">${ic('pin')} Use my location</button>
       <p class="hint-t" style="margin-top:10px">Prefer not to? Just pick your town below the search bar.</p>
     </div>`;
@@ -86,7 +86,7 @@ async function viewHome() {
   if (!state.user) {
     cta.innerHTML = `<div class="sec-block" style="background:var(--pine);color:#fff;border:none">
       <h3 style="color:#fff">Have a vacant house?</h3>
-      <p style="font-size:13.5px;color:#d8e8dd;margin-bottom:14px">Post it on HomeLinkKE and reach renters in every town in Kenya. First 2 listings are free.</p>
+      <p style="font-size:13.5px;color:#d8e8dd;margin-bottom:14px">Post it on HomeLinKE and reach renters in every town in Kenya. First 2 listings are free.</p>
       <a class="btn btn-primary" href="#/register">List your property</a></div>`;
   } else if (state.user.role === 'LANDLORD') {
     cta.innerHTML = `<div class="sec-block" style="background:var(--pine);color:#fff;border:none">

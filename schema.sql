@@ -1,4 +1,4 @@
--- HomeLinkKE — D1 schema reference (authoritative copy)
+-- HomeLinKE — D1 schema reference (authoritative copy)
 -- This mirrors the SCHEMA const in functions/api/[[route]].js, which is what
 -- actually runs: /api/setup executes it on first hit, then applies versioned
 -- ALTER TABLE migrations (see SCHEMA_VER / ensureSchema). Keep both in sync.

@@ -1,4 +1,4 @@
-// HomeLinkKE — Login / Register / Setup / Profile
+// HomeLinKE — Login / Register / Setup / Profile
 function authRedirect() { location.hash = state.user && state.user.role === 'ADMIN' ? '#/admin' : '#/home'; }
 
 // target: optional hash to go to after auth — registration sends new users to the welcome guide
@@ -17,8 +17,8 @@ function viewAuth(tab) {
   const isReg = tab === 'register';
   v.innerHTML = `<div class="auth-wrap"><div class="auth-card">
     <div class="auth-brand">
-      <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinkKE logo" width="60" height="60">
-      <div class="auth-name">Home<b>Link</b>KE</div>
+      <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinKE logo" width="60" height="60">
+      <div class="auth-name">Home<b>Lin</b>KE</div>
       <p class="auth-tag">${isReg
         ? 'Create a free account — find a house anywhere in Kenya or list your own.'
         : 'Vacant houses &amp; apartments across Kenya — chat with landlords directly, never pay before viewing.'}</p>
@@ -28,7 +28,7 @@ function viewAuth(tab) {
       <button id="t-reg" class="${isReg ? 'on' : ''}">Create account</button>
     </div>
     <div id="auth-body">${isReg ? regForm() : loginForm()}</div>
-    <div class="auth-alt">${isReg ? 'Already have an account? <a href="#/login">Sign in</a>' : 'New to HomeLinkKE? <a href="#/register">Create an account</a>'}</div>
+    <div class="auth-alt">${isReg ? 'Already have an account? <a href="#/login">Sign in</a>' : 'New to HomeLinKE? <a href="#/register">Create an account</a>'}</div>
   </div></div>`;
 
   v.querySelector('#t-login').onclick = () => viewAuth('login');
@@ -115,8 +115,8 @@ async function viewSetup() {
   if (!r.ok || !r.available) { location.hash = '#/login'; return; }
   v.innerHTML = `<div class="auth-wrap"><div class="auth-card">
     <div class="auth-brand">
-      <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinkKE logo" width="60" height="60">
-      <div class="auth-name">Home<b>Link</b>KE</div>
+      <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinKE logo" width="60" height="60">
+      <div class="auth-name">Home<b>Lin</b>KE</div>
       <p class="auth-tag">One-time setup — secure your platform before renters and landlords join.</p>
     </div>
     <span class="pill pill-o" style="margin-bottom:10px">${ic('shield')} One-time setup</span>
@@ -212,7 +212,7 @@ async function viewProfile(edit) {
       ${admRow}
       ${prow('heart', 'Favourites', 'Rooms you saved for later', '#/favorites')}
       ${prow('doc', 'Getting started guide', 'How it works — the guide from your first day', '#/welcome')}
-      ${prow('shield', 'Privacy & safety', 'How HomeLinkKE handles your data', '#/privacy')}
+      ${prow('shield', 'Privacy & safety', 'How HomeLinKE handles your data', '#/privacy')}
     </div>
     <div class="plabel">Settings</div>
     <div class="prowbox">
@@ -298,13 +298,13 @@ function viewWelcome() {
       ${ic('shield')}<span><b>Never send money before you SEE the house.</b>
       No deposit, no booking fee, no reservation — nothing. Visit the house first, then pay the landlord directly.</span>
     </div>
-    <div class="sec-block"><h3>How HomeLinkKE works</h3>
+    <div class="sec-block"><h3>How HomeLinKE works</h3>
       <ol class="guide-list">
         <li><b>Search</b> — type a town in the search bar, or tap <b>Use my location</b> to see vacant houses nearest to you first.</li>
         <li><b>Open &amp; compare</b> — check the photos, rent, deposit, water and electricity on every listing before you chat.</li>
         <li><b>Chat</b> — message the landlord in the app or on WhatsApp. Ask anything — when to view, what is included.</li>
         <li><b>Visit &amp; view</b> — go see the house in daylight, ideally with a friend. A real landlord will welcome this.</li>
-        <li><b>Pay only after viewing</b> — deposit and rent go directly to the landlord, never through HomeLinkKE.</li>
+        <li><b>Pay only after viewing</b> — deposit and rent go directly to the landlord, never through HomeLinKE.</li>
       </ol>
     </div>
     <div class="sec-block"><h3>Red flags — walk away</h3>
@@ -326,7 +326,7 @@ function viewWelcome() {
       </ol>
     </div>
     <div class="notice notice-g" style="margin-top:14px">
-      ${ic('shield')}<span><b>Be the landlord renters trust:</b> never ask for money before a viewing, and meet tenants at the house in daylight. HomeLinkKE never collects money on your behalf.</span>
+      ${ic('shield')}<span><b>Be the landlord renters trust:</b> never ask for money before a viewing, and meet tenants at the house in daylight. HomeLinKE never collects money on your behalf.</span>
     </div>
     <div style="display:flex;gap:10px;margin-top:16px">
       <a class="btn btn-green" style="flex:1" href="#/new">${ic('plus')} Post my first house</a>
@@ -335,8 +335,8 @@ function viewWelcome() {
   v.innerHTML = `
     <div class="auth-wrap" style="max-width:640px"><div class="auth-card">
       <div class="auth-brand">
-        <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinkKE" width="54" height="54">
-        <div class="auth-name">Welcome to Home<b>Link</b>KE${hi}!</div>
+        <img class="auth-logo" src="/icons/icon-192.png" alt="HomeLinKE" width="54" height="54">
+        <div class="auth-name">Welcome to Home<b>Lin</b>KE${hi}!</div>
         <p class="auth-tag">${isLL ? 'Your account is ready — here is how to rent out fast and safe.' : 'Your account is ready — here is how to find a house safely.'}</p>
       </div>
       ${isLL ? landlord : seeker}

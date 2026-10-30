@@ -1,4 +1,4 @@
-// HomeLinkKE — Listing detail, Favourites, Privacy
+// HomeLinKE — Listing detail, Favourites, Privacy
 let VIEWED = JSON.parse(localStorage.getItem('hl_viewed') || '[]');
 
 async function viewListing(id) {
@@ -138,7 +138,7 @@ async function viewListing(id) {
         <div class="contact-btns">
           <a class="btn btn-green ${canContact ? '' : 'need-auth'}" ${canContact ? `href="tel:${esc(contactNum)}"` : 'href="#/login"'}>
             ${ic('phone')} Call</a>
-          <a class="btn btn-primary ${canContact ? '' : 'need-auth'}" ${canContact ? `target="_blank" rel="noopener" href="${waLink(contactNum, 'Hi! I saw your listing “' + l.title + '” on HomeLinkKE. Is it still available?')}"` : 'href="#/login"'}>
+          <a class="btn btn-primary ${canContact ? '' : 'need-auth'}" ${canContact ? `target="_blank" rel="noopener" href="${waLink(contactNum, 'Hi! I saw your listing “' + l.title + '” on HomeLinKE. Is it still available?')}"` : 'href="#/login"'}>
             ${ic('wa')} WhatsApp</a>
         </div>
         <button class="btn btn-outline btn-block" id="btn-msg" style="margin-top:8px">${ic('chat')} Message in app</button>
@@ -231,7 +231,7 @@ function viewPrivacy() {
     <h3>Who can see it</h3>
     <p style="font-size:13.5px;color:var(--ink2);margin-bottom:10px">Listing content is public. Your phone number is shown to signed-in users on your listings and in chats so renters can reach you. Your verification documents are only visible to the admin. Chats are only visible to you and the other person. If you share your location, it stays on your device — it is never sent to our servers.</p>
     <h3>The golden rule</h3>
-    <p style="font-size:13.5px;color:var(--ink2);margin-bottom:10px">HomeLinkKE never collects rent, deposit, or any payment. All money matters happen face-to-face after a viewing. If anyone asks you to pay through the app or before a viewing, report them.</p>
+    <p style="font-size:13.5px;color:var(--ink2);margin-bottom:10px">HomeLinKE never collects rent, deposit, or any payment. All money matters happen face-to-face after a viewing. If anyone asks you to pay through the app or before a viewing, report them.</p>
     <h3>Data Protection Act (Kenya, 2019)</h3>
     <p style="font-size:13.5px;color:var(--ink2)">We collect the minimum data needed to run the service. You may ask for your data to be deleted at any time — contact the site admin.</p>
   </div>`;

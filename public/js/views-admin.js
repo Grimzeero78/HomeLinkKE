@@ -1,4 +1,4 @@
-// HomeLinkKE — Admin panel: verifications, boosts, reports, listings, users, settings
+// HomeLinKE — Admin panel: verifications, boosts, reports, listings, users, settings
 // Sections with something waiting show an orange notification badge on their tab
 // (live — the badge poll refreshes them, see refreshAdminCounts in ui.js).
 const ADM_TABS = [['overview', 'Overview'], ['verifications', 'Verifications'], ['boosts', 'Boosts'], ['reports', 'Reports'], ['listings', 'Listings'], ['users', 'Users'], ['settings', 'Settings']];

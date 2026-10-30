@@ -1,4 +1,4 @@
-/* HomeLinkKE service worker — network first, cache fallback (offline shell only) */
+/* HomeLinKE service worker — network first, cache fallback (offline shell only) */
 const CACHE = 'homelinkke-v2';
 const CORE = ['/', '/styles.css', '/js/api.js', '/js/ui.js', '/js/maps.js', '/js/app.js', '/manifest.webmanifest', '/icons/icon-192.png', '/vendor/leaflet.css', '/vendor/leaflet.js'];
 

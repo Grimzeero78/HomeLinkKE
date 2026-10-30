@@ -1,4 +1,4 @@
-// HomeLinkKE — shared UI helpers, constants, icons
+// HomeLinKE — shared UI helpers, constants, icons
 const TYPES = ['Bedsitter', 'Single Room', 'Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom', '4+ Bedroom', 'Bungalow', 'Maisonette'];
 // Kenya gazetteer — the towns the app browses, targets boosts and searches first.
 // Coordinates are town-centre approximations (the exact spot always comes from the
@@ -62,7 +62,7 @@ const TOWNS = [
   { n: 'Wajir',          lat:  1.7481, lng: 40.0574 },
   { n: 'Moyale',         lat:  3.5266, lng: 39.0562 },
 ];
-// The old campus constants are gone: HomeLinkKE is Kenya-wide. The "gate" concept is
+// The old campus constants are gone: HomeLinKE is Kenya-wide. The "gate" concept is
 // replaced by the renter's own position (GPS) and the town they are browsing.
 const KENYA_CENTER = { lat: -0.0236, lng: 37.9062 }; // geographic centre of Kenya
 const FURN = ['Furnished', 'Semi-furnished', 'Unfurnished'];
@@ -267,7 +267,7 @@ function maybeStudentCaution() {
   modal(`<div style="text-align:center;padding:4px 2px">
     <div style="width:60px;height:60px;margin:0 auto 12px;border-radius:18px;background:var(--ember-mist);color:var(--ember-deep);display:grid;place-items:center">${ic('shield')}</div>
     <h3 style="font-family:var(--disp);font-size:19px">Before you pay anyone</h3>
-    <p style="font-size:13.5px;color:var(--ink2);line-height:1.55;margin:8px 0 12px">HomeLinkKE never handles your rent. <b>Never send money — M-Pesa or cash — before you have physically visited the house and met the landlord or caretaker in person.</b></p>
+    <p style="font-size:13.5px;color:var(--ink2);line-height:1.55;margin:8px 0 12px">HomeLinKE never handles your rent. <b>Never send money — M-Pesa or cash — before you have physically visited the house and met the landlord or caretaker in person.</b></p>
     <div class="notice notice-r" style="text-align:left;margin-bottom:14px">${ic('flag')}<span><b>Scam signs:</b> a "viewing fee", refusing to meet in person, or pressure to pay before you have seen the house.</span></div>
     <button class="btn btn-green btn-block" id="ca-ok">I understand — show me houses</button>
   </div>`, m => m.querySelector('#ca-ok').onclick = () => {

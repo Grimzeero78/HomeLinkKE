@@ -1,4 +1,4 @@
-# HomeLinkKE — Houses & Rentals across Kenya
+# HomeLinKE — Houses & Rentals across Kenya
 
 A mobile-first PWA where **every Kenyan** can find or list vacant houses, bedsitters
 and apartments in any town. Built on the proven ChukaHomes engine, rebuilt Kenya-wide:

@@ -1,5 +1,5 @@
 /* ============================================================
-   HomeLinkKE design system — pine / ember / cream
+   HomeLinKE design system — pine / ember / cream
    Mobile-first; desktop layout at ≥960px
    ============================================================ */
 :root{
@@ -129,7 +129,7 @@ textarea.inp{min-height:84px;resize:vertical}
 
 /* watermark on photos */
 .wm{position:absolute;inset:0;pointer-events:none;opacity:.10;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='90'%3E%3Ctext x='10' y='60' font-family='Arial' font-size='17' font-weight='800' fill='%230e5a33' transform='rotate(-18 70 45)'%3EHOMELINKKE%3C/text%3E%3C/svg%3E")}
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='90'%3E%3Ctext x='10' y='60' font-family='Arial' font-size='17' font-weight='800' fill='%230e5a33' transform='rotate(-18 70 45)'%3EHOMELINKE%3C/text%3E%3C/svg%3E")}
 
 /* ---------- sections ---------- */
 .sec{margin-top:26px}
@@ -362,7 +362,7 @@ textarea.inp{min-height:84px;resize:vertical}
 /* fix: the hidden attribute must always win over display rules (stuck dark lightbox) */
 [hidden]{display:none!important}
 
-/* ---------- HomeLinkKE maps (Google tiles on Leaflet) ---------- */
+/* ---------- HomeLinKE maps (Google tiles on Leaflet) ---------- */
 .gmap{position:relative;z-index:0;isolation:isolate;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#e5e8ea}
 .gmap-loading{display:grid;place-items:center;min-height:220px}
 .leaflet-container{font-family:var(--body);background:#e5e8ea}

@@ -1,4 +1,4 @@
-// HomeLinkKE — Chats: conversation list + live thread (2.5s polling)
+// HomeLinKE — Chats: conversation list + live thread (2.5s polling)
 // WhatsApp-style actions: long-press a bubble → Copy / Edit / Delete for me / Delete for everyone
 // Unique: Quick-reply chips (one-tap common questions) — role aware
 let chatTimer = null;
@@ -75,7 +75,7 @@ async function viewThread(id) {
         <div style="font-size:11.5px;color:var(--ink2)">${esc(listing.title)} · ${kes(listing.rent)}/${perShort(listing.period)}</div>
       </div>
       ${other.phone ? `<a class="btn btn-green btn-sm" href="tel:${esc(other.phone)}">${ic('phone')}</a>
-      <a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="${waLink(other.phone, 'Hi! About “' + listing.title + '” on HomeLinkKE…')}">${ic('wa')}</a>` : ''}
+      <a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="${waLink(other.phone, 'Hi! About “' + listing.title + '” on HomeLinKE…')}">${ic('wa')}</a>` : ''}
       <button class="back-m" id="th-report" title="Report" style="flex:none">${ic('flag')}</button>
     </div>
     <div class="thread">

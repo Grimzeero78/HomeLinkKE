@@ -1,4 +1,4 @@
-// HomeLinkKE — My listings + Boost payment (town-targeted)
+// HomeLinKE — My listings + Boost payment (town-targeted)
 async function viewMyListings() {
   if (!state.user) { location.hash = '#/login'; return; }
   const v = document.getElementById('view');
@@ -50,7 +50,7 @@ async function viewMyListings() {
     if (res.ok) { toast('Marked as ' + res.status.toLowerCase()); viewMyListings(); } else toast(res.error, true);
   });
   v.querySelectorAll('[data-act="del"]').forEach(b => b.onclick = () =>
-    confirmDlg('Delete this listing?', 'It will be removed from HomeLinkKE. You cannot undo this.', 'Delete', async () => {
+    confirmDlg('Delete this listing?', 'It will be removed from HomeLinKE. You cannot undo this.', 'Delete', async () => {
       const res = await api('/listings/' + b.dataset.id, { method: 'DELETE' });
       if (res.ok) { toast('Listing deleted'); viewMyListings(); } else toast(res.error, true);
     }, true));
@@ -88,7 +88,7 @@ async function viewBoost(id) {
       <label class="lbl">M-Pesa confirmation code <span style="font-weight:500">(optional but speeds up confirmation)</span></label>
       <input class="inp" id="bs-code" placeholder="e.g. SLK7AB12C9" style="text-transform:uppercase">
       <button class="btn btn-primary btn-block" id="bs-go" style="margin-top:16px">${ic('bolt')} I have sent the money</button>
-      <p class="hint-t" style="margin-top:10px">Payments go directly to <b>${esc(payname)}</b>, not to HomeLinkKE. Rent and deposits are NEVER paid through this platform.</p>
+      <p class="hint-t" style="margin-top:10px">Payments go directly to <b>${esc(payname)}</b>, not to HomeLinKE. Rent and deposits are NEVER paid through this platform.</p>
     </div>` : ''}
     <div style="margin-top:14px"><a class="btn btn-outline" href="#/listing/${l.id}">${ic('back')} Back to listing</a></div>`;
 

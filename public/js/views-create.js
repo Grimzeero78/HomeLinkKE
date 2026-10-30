@@ -1,4 +1,4 @@
-// HomeLinkKE — 8-step create/edit listing wizard
+// HomeLinKE — 8-step create/edit listing wizard
 const LBLANK = () => ({
   title: '', ptype: 'Bedsitter', units: 1, furnishing: 'Unfurnished', floor: 'Ground',
   town: '', area: '', landmark: '', lat: null, lng: null, road: 'Tarmac',
@@ -131,7 +131,7 @@ async function viewCreate(id) {
       </div>
       <p class="hint-t">Pick "Available now" if the room is vacant today.</p>
       ${txt('contactPhone', 'Contact phone / WhatsApp (optional)', 'Defaults to your profile number')}
-      <div class="notice notice-g" style="margin-top:14px">${ic('shield')}<span>Your number is only shown to signed-in users. HomeLinkKE never collects any payment on your behalf.</span></div>` },
+      <div class="notice notice-g" style="margin-top:14px">${ic('shield')}<span>Your number is only shown to signed-in users. HomeLinKE never collects any payment on your behalf.</span></div>` },
     { t: 'Photos & publish', html: () => `
       <label class="lbl">Photos (3–8) — first photo is the cover</label>
       <div class="photo-grid" id="w-photos"></div>

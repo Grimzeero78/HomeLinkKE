@@ -1,4 +1,4 @@
-# HomeLinkKE — White-Hat Security Audit
+# HomeLinKE — White-Hat Security Audit
 
 **Date:** 29 Oct 2026 · **Scope:** full API (`functions/api/[[route]].js`), client JS, headers, auth flows
 **Method:** manual code review + automated attack suite (`scripts/whitehat_test.mjs`, 75 assertions) against a live local instance.
