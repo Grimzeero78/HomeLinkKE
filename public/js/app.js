@@ -1,4 +1,4 @@
-// HomeLinKE — router, navigation shell, boot
+// HuntInKE — router, navigation shell, boot
 let cleanups = [];
 function onLeave(fn) { cleanups.push(fn); }
 

@@ -1,4 +1,4 @@
-// HomeLinKE — API client + session state
+// HuntInKE — API client + session state
 const TOKEN_KEY = 'hl_token';
 const state = {
   user: null,

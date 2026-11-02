@@ -1,4 +1,4 @@
-// HomeLinKE map engine — real Google Maps tiles on self-hosted Leaflet.
+// HuntInKE map engine — real Google Maps tiles on self-hosted Leaflet.
 // Same accurate Google map everywhere (roads, estates, shops are all labelled),
 // with NO API key and NO billing. Key properties:
 //   1. HEALTHY SCROLLING — the map never hijacks the page:

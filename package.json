@@ -1,8 +1,8 @@
 {
-  "name": "homelinke",
+  "name": "huntinke",
   "version": "1.0.0",
   "private": true,
-  "description": "HomeLinKE — houses & rentals across Kenya. Static frontend + Cloudflare Pages Functions + D1.",
+  "description": "HuntInKE — houses & rentals across Kenya. Static frontend + Cloudflare Pages Functions + D1.",
   "scripts": {
     "dev": "wrangler pages dev public --d1 DB=homelinkke-local --persist-to .wrangler/state --port 8788",
     "schema": "wrangler d1 execute homelinkke-local --local --file schema.sql --persist-to .wrangler/state"

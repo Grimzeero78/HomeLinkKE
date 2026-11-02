@@ -1,5 +1,5 @@
 // ============================================================
-// HomeLinKE API — Cloudflare Pages Functions (catch-all)
+// HuntInKE API — Cloudflare Pages Functions (catch-all)
 // File: functions/api/[[route]].js
 // Binding required: D1 database bound as `DB`
 // ============================================================
@@ -350,7 +350,7 @@ async function queryListings(env, url, opts = {}) {
     if (base) add('(l.town = ? OR l.ptype = ?)', base.town, base.ptype);
   }
 
-  // TOWN-TARGETED BOOSTS — the HomeLinKE ranking rule:
+  // TOWN-TARGETED BOOSTS — the HuntInKE ranking rule:
   //   · a boost only jumps to the top for people browsing the boosted listing's OWN town
   //     (the client passes bt = the town the renter is currently browsing)
   //   · elsewhere the same boosted listing ranks as a normal, non-boosted row —
