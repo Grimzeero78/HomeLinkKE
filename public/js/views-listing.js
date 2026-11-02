@@ -26,6 +26,7 @@ async function viewListing(id) {
   const boosted = l.boostedUntil && l.boostedUntil > Date.now();
   const coords = l.lat != null && l.lng != null;
   const dl = distLabel(l);
+  const vac = vacInfo(l); // vacancy — shown big and clear, never as a tiny tag
   const gmapsLink = coords ? `https://www.google.com/maps/search/?api=1&query=${l.lat},${l.lng}` : null;
   const dirLink = coords ? `https://www.google.com/maps/dir/?api=1&destination=${l.lat},${l.lng}` : null;
   const contactNum = l.contactPhone || l.ownerPhone || '';
@@ -54,7 +55,7 @@ async function viewListing(id) {
         <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
           ${boosted ? `<span class="pill pill-o">${ic('bolt')}Boosted</span>` : ''}
           ${verified ? `<span class="pill pill-g">${ic('shield')}Verified landlord</span>` : ''}
-          <span class="pill ${l.status === 'AVAILABLE' ? 'pill-g' : 'pill-x'}">${l.status === 'AVAILABLE' ? 'Available' : 'Taken'}</span>
+          <span class="pill ${vac.full ? 'pill-full' : 'pill-vac'}">${vac.full ? ic('x') : ic('check')}${esc(vac.label)}</span>
           <span class="pill pill-x">${ic('eye')}${l.views} views</span>
         </div>
         <div class="dacts">
@@ -63,11 +64,13 @@ async function viewListing(id) {
           <button class="btn btn-outline btn-sm" id="btn-report">${ic('flag')} Report</button>
         </div>
         ${!r.isOwner ? `<div class="notice notice-r" style="margin-top:12px">${ic('shield')}<span><b>Never pay before viewing.</b> Visit the house and meet the landlord or caretaker in person before sending any deposit — M-Pesa or cash.</span></div>` : ''}
+        ${vac.full && !r.isOwner ? `<div class="notice notice-o" style="margin-top:10px">${ic('x')}<span><b>All units here are occupied right now.</b> Save this listing or message the landlord — be first in line when a unit opens.</span></div>` : ''}
       </div>
 
       <div class="sec-block"><h3>Key facts</h3><div class="dgrid">
         <div class="dcell"><div class="k">Type</div><div class="v">${esc(l.ptype)}</div></div>
         <div class="dcell"><div class="k">Units in compound</div><div class="v">${l.units}</div></div>
+        <div class="dcell"><div class="k">Vacant now</div><div class="v">${vac.full ? '0 — all occupied' : (vac.u > 1 ? vac.v + ' of ' + vac.u : 'Yes — this one')}</div></div>
         <div class="dcell"><div class="k">Furnishing</div><div class="v">${esc(l.furnishing)}</div></div>
         <div class="dcell"><div class="k">Floor</div><div class="v">${esc(l.floor)}</div></div>
         <div class="dcell"><div class="k">Road access</div><div class="v">${esc(l.road)}</div></div>

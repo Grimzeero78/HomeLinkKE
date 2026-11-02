@@ -16,7 +16,9 @@ async function viewMyListings() {
       ? 'Verified account: up to 5 listings.'
       : 'Free plan: 2 listings. Get verified in your Profile to post up to 5.'}</span></div>
     <div class="notice notice-o" style="margin-bottom:14px">${ic('bolt')}<span><b>Boost gets you seen:</b> KES ${BOOST.amountKes} pins a listing at the top of results <b>in its town</b> for ${BOOST.days} days — renters browsing that town see it first. Tap <b>Boost</b> on any listing below.</span></div>
-    ${items.length ? items.map(l => `
+    ${items.length ? items.map(l => {
+      const vac = vacInfo(l);
+      return `
       <div class="row-card">
         <div class="row-top">
           <div style="display:flex;gap:11px;min-width:0">
@@ -27,7 +29,7 @@ async function viewMyListings() {
               <div class="row-title">${esc(l.title)}</div>
               <div class="row-sub">${kes(l.rent)}/${perShort(l.period)} · ${esc(l.town || '')}${l.area ? ' · ' + esc(l.area) : ''} · ${l.views} views</div>
               <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
-                <span class="pill ${l.status === 'AVAILABLE' ? 'pill-g' : 'pill-x'}">${l.status === 'AVAILABLE' ? 'Available' : 'Taken'}</span>
+                <span class="pill ${vac.full ? 'pill-full' : 'pill-vac'}">${vac.full ? ic('x') : ic('check')}${esc(vac.label)}</span>
                 ${boosted(l) ? `<span class="pill pill-o">${ic('bolt')}Boosted till ${fmtDate(l.boostedUntil)}</span>` : ''}
               </div>
             </div>
@@ -36,18 +38,29 @@ async function viewMyListings() {
         <div class="row-acts">
           <a class="btn btn-outline btn-sm" href="#/listing/${l.id}">${ic('eye')} View</a>
           <a class="btn btn-outline btn-sm" href="#/edit/${l.id}">${ic('edit')} Edit</a>
-          <button class="btn btn-outline btn-sm" data-act="status" data-id="${l.id}" data-to="${l.status === 'AVAILABLE' ? 'TAKEN' : 'AVAILABLE'}">
-            ${l.status === 'AVAILABLE' ? 'Mark taken' : 'Mark available'}</button>
           <a class="btn btn-primary btn-sm" href="#/boost/${l.id}">${ic('bolt')} ${boosted(l) ? 'Boost again' : 'Boost'}</a>
           <button class="btn btn-danger btn-sm" data-act="del" data-id="${l.id}">${ic('trash')}</button>
         </div>
-      </div>`).join('')
+        <div class="vac-row" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
+          <span style="font-size:12px;font-weight:700;color:var(--ink3)">VACANCY</span>
+          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.max(0, vac.v - 1)}" ${vac.v <= 0 ? 'disabled' : ''} aria-label="Mark one unit taken">−1</button>
+          <span class="vac-lab">${vac.full ? `<b>Full</b> — all ${vac.u} occupied` : `<b>${vac.v}</b> of ${vac.u} vacant`}</span>
+          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.min(vac.u, vac.v + 1)}" ${vac.v >= vac.u ? 'disabled' : ''} aria-label="Mark one unit vacant">+1</button>
+          ${vac.full
+            ? `<button class="btn btn-outline btn-sm" data-vac="${l.id}:${vac.u}">Reopen all</button>`
+            : `<button class="btn btn-outline btn-sm" data-vac="${l.id}:0">All taken</button>`}
+        </div>
+      </div>`;
+    }).join('')
     : emptyBox('No listings yet', 'Post your first vacant room — it takes about 2 minutes.')}
     <a class="btn btn-green btn-block" href="#/new" style="margin-top:14px">${ic('plus')} Post a new listing</a>`;
 
-  v.querySelectorAll('[data-act="status"]').forEach(b => b.onclick = async () => {
-    const res = await api('/listings/' + b.dataset.id + '/status', { body: { status: b.dataset.to } });
-    if (res.ok) { toast('Marked as ' + res.status.toLowerCase()); viewMyListings(); } else toast(res.error, true);
+  // vacancy stepper — every tap saves instantly so the count renters see is always true
+  v.querySelectorAll('[data-vac]').forEach(b => b.onclick = async () => {
+    const i = b.dataset.vac.indexOf(':');
+    const id = b.dataset.vac.slice(0, i), nv = parseInt(b.dataset.vac.slice(i + 1), 10);
+    const res = await api('/listings/' + id + '/status', { body: { vacant: nv } });
+    if (res.ok) { toast(res.unitsVacant > 0 ? 'Saved — ' + res.unitsVacant + ' vacant' : 'Saved — all occupied'); viewMyListings(); } else toast(res.error, true);
   });
   v.querySelectorAll('[data-act="del"]').forEach(b => b.onclick = () =>
     confirmDlg('Delete this listing?', 'It will be removed from HuntInKE. You cannot undo this.', 'Delete', async () => {

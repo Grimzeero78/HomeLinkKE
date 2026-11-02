@@ -112,6 +112,7 @@ CREATE TABLE IF NOT EXISTS listings (
   title TEXT NOT NULL,
   ptype TEXT NOT NULL DEFAULT 'Bedsitter',
   units INTEGER NOT NULL DEFAULT 1,
+  unitsVacant INTEGER,
   furnishing TEXT NOT NULL DEFAULT 'Unfurnished',
   floor TEXT NOT NULL DEFAULT 'Ground',
   town TEXT NOT NULL DEFAULT '',
@@ -233,7 +234,7 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('gmaps_key','');
 `;
 
 let schemaReady = null;
-const SCHEMA_VER = '3';
+const SCHEMA_VER = '4';
 
 async function ensureSchema(env) {
   if (!schemaReady) {
@@ -263,6 +264,13 @@ async function ensureSchema(env) {
           try { await env.DB.prepare(`ALTER TABLE listings ADD COLUMN ${c} TEXT NOT NULL DEFAULT '${d}'`).run(); } catch (e) { /* column already exists */ }
         }
       }
+      if (ver < 4) {
+        // v4 — per-unit vacancy: unitsVacant = how many units are free right now.
+        //   0 = all occupied (status flips to TAKEN automatically). NULL = legacy row.
+        //   Backfill: AVAILABLE -> all units vacant; TAKEN -> 0 vacant.
+        try { await env.DB.prepare('ALTER TABLE listings ADD COLUMN unitsVacant INTEGER').run(); } catch (e) { /* column already exists */ }
+        await env.DB.prepare("UPDATE listings SET unitsVacant = CASE WHEN status = 'TAKEN' THEN 0 ELSE COALESCE(units, 1) END WHERE unitsVacant IS NULL").run();
+      }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_ver','" + SCHEMA_VER + "')").run();
     })().catch(e => { schemaReady = null; throw e; });
   }
@@ -274,7 +282,7 @@ const LSTR = ['title', 'ptype', 'furnishing', 'floor', 'town', 'area', 'landmark
   'water', 'waterCost', 'waterSched', 'elec', 'elecCost', 'wifiCost', 'wifiProvider', 'garbage', 'backup',
   'bath', 'tenantPref', 'availableFrom', 'contactPhone'];
 const LYNN = ['waterTank', 'negotiable', 'balcony', 'tile', 'ceiling', 'wardrobe', 'hotShower', 'pets', 'ensuite', 'kitchen', 'parking'];
-const LNUM = ['units', 'rent', 'deposit'];
+const LNUM = ['units', 'unitsVacant', 'rent', 'deposit'];
 
 function listingCols(b, base) {
   // length caps: without them an authenticated landlord could store megabyte strings in
@@ -283,7 +291,7 @@ function listingCols(b, base) {
   const out = {};
   for (const k of LSTR) if (b[k] !== undefined) out[k] = S(b[k]).slice(0, LCAPS[k] || 60);
   for (const k of LYNN) if (b[k] !== undefined) out[k] = S(b[k]).slice(0, 12); // Yes/No-style fields
-  for (const k of LNUM) if (b[k] !== undefined) out[k] = Math.min(k === 'units' ? 1000 : 10000000, Math.max(0, N(b[k])));
+  for (const k of LNUM) if (b[k] !== undefined) out[k] = Math.min(k === 'rent' || k === 'deposit' ? 10000000 : 1000, Math.max(0, N(b[k])));
   if (b.wifi !== undefined) out.wifi = S(b.wifi);
   if (b.lat !== undefined) out.lat = b.lat === '' || b.lat === null ? null : N(b.lat);
   if (b.lng !== undefined) out.lng = b.lng === '' || b.lng === null ? null : N(b.lng);
@@ -311,7 +319,7 @@ async function attachThumbs(env, rows, keyField = 'id', outField = 'thumb') {
   return rows;
 }
 
-const CARD_COLS = `l.id, l.title, l.ptype, l.units, l.rent, l.period, l.town, l.area, l.landmark, l.lat, l.lng,
+const CARD_COLS = `l.id, l.title, l.ptype, l.units, l.unitsVacant, l.rent, l.period, l.town, l.area, l.landmark, l.lat, l.lng,
   l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.ensuite, l.parking, l.backup, l.garbage, l.tenantPref, l.availableFrom,
   l.status, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
 
@@ -594,6 +602,9 @@ export async function onRequest(context) {
           ? 'You have reached the 5-listing limit. Contact support to add more.'
           : 'Free plan: 2 listings. Get verified in your Profile to post up to 5.');
         const now = Date.now();
+        // a fresh listing starts with every unit vacant — that is why it is being posted
+        if (v.unitsVacant === undefined) v.unitsVacant = Math.max(1, N(v.units) || 1);
+        else if (v.units !== undefined) v.unitsVacant = Math.min(v.unitsVacant, v.units);
         const keys = Object.keys(v);
         const r = await env.DB.prepare(
           `INSERT INTO listings (ownerId, ${keys.join(', ')}, createdAt, updatedAt) VALUES (${Array(keys.length + 3).fill('?').join(', ')})`)
@@ -613,6 +624,8 @@ export async function onRequest(context) {
         const b = await json_();
         const { v, error } = listingCols(b, own);
         if (error) return bad(error);
+        // units shrank on edit -> never keep more vacancies than there are units
+        if (v.units !== undefined && v.unitsVacant === undefined && own.unitsVacant != null && own.unitsVacant > v.units) v.unitsVacant = v.units;
         const keys = Object.keys(v);
         if (keys.length) {
           await env.DB.prepare(`UPDATE listings SET ${keys.map(k => k + ' = ?').join(', ')}, updatedAt = ? WHERE id = ?`)
@@ -640,16 +653,25 @@ export async function onRequest(context) {
         await env.DB.prepare("UPDATE listings SET status = 'REMOVED', updatedAt = ? WHERE id = ?").bind(Date.now(), id).run();
         return ok();
       }
-      // status toggle
+      // status toggle / vacancy update
+      // body: { vacant: N }  -> exact vacant-unit count (status auto-derives: 0 = TAKEN)
+      //       { status: 'TAKEN'|'AVAILABLE' } -> legacy: all taken / all vacant
       if (seg[1] && seg[2] === 'status' && method === 'POST') {
         const u = need(['LANDLORD']);
         const id = N(seg[1]);
         const own = await env.DB.prepare('SELECT * FROM listings WHERE id = ?').bind(id).first();
         if (!own || own.ownerId !== u.id) return bad('Listing not found', 404);
         const b = await json_();
-        const st = b.status === 'TAKEN' ? 'TAKEN' : 'AVAILABLE';
-        await env.DB.prepare('UPDATE listings SET status = ?, updatedAt = ? WHERE id = ?').bind(st, Date.now(), id).run();
-        return ok({ status: st });
+        const total = Math.max(1, N(own.units) || 1);
+        let vacant;
+        if (b.vacant !== undefined) {
+          vacant = Math.max(0, Math.min(N(b.vacant), total));
+        } else {
+          vacant = b.status === 'TAKEN' ? 0 : total;
+        }
+        const st = vacant > 0 ? 'AVAILABLE' : 'TAKEN';
+        await env.DB.prepare('UPDATE listings SET status = ?, unitsVacant = ?, updatedAt = ? WHERE id = ?').bind(st, vacant, Date.now(), id).run();
+        return ok({ status: st, unitsVacant: vacant, units: total });
       }
       // view counter (deduped per visitor per listing for 6 hours)
       if (seg[1] && seg[2] === 'view' && method === 'POST') {
@@ -1016,7 +1038,7 @@ export async function onRequest(context) {
         return ok();
       }
       if (seg[1] === 'listings' && seg[2] && seg[3] === 'restore' && method === 'POST') {
-        await env.DB.prepare("UPDATE listings SET status = 'AVAILABLE' WHERE id = ?").bind(N(seg[2])).run();
+        await env.DB.prepare("UPDATE listings SET status = 'AVAILABLE', unitsVacant = MAX(COALESCE(unitsVacant, 0), 1) WHERE id = ?").bind(N(seg[2])).run();
         return ok();
       }
       // HARD delete — 'remove' only hides a listing; this one wipes every trace

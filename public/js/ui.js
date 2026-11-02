@@ -351,15 +351,36 @@ async function refreshAdminCounts() {
 }
 
 // ---------- listing card ----------
+// vacancy — the #1 thing renters scan for. Never hide it, never make it tiny:
+//   0 vacant -> red ALL OCCUPIED badge + card photo dimmed
+//   some vacant -> green badge with the exact count ("3 VACANT of 6" / "VACANT")
+function vacInfo(l) {
+  const u = Math.max(1, l.units || 1);
+  const v = l.unitsVacant == null ? (l.status === 'TAKEN' ? 0 : u)
+    : Math.max(0, Math.min(l.unitsVacant, u));
+  const full = v <= 0 || l.status === 'TAKEN';
+  return {
+    u, v, full,
+    label: full ? (u > 1 ? `All ${u} units occupied` : 'Occupied')
+      : (u <= 1 ? 'Vacant now' : `${v} of ${u} units vacant`),
+    badge: full
+      ? `<span class="badge-vac full">${ic('x')} ALL OCCUPIED</span>`
+      : (u <= 1
+        ? `<span class="badge-vac open">${ic('check')} VACANT</span>`
+        : `<span class="badge-vac open">${ic('check')} ${v} VACANT<span class="bv-of">of ${u}</span></span>`),
+  };
+}
 function listingCard(l) {
   const boosted = l.boostedUntil && l.boostedUntil > Date.now();
   const verified = l.ownerVerified === 'APPROVED';
   const locTxt = [esc(l.town), l.area ? esc(l.area) : '', l.landmark ? esc(l.landmark) : ''].filter(Boolean).join(' · ');
   const dl = distLabel(l);
-  return `<a class="card" href="#/listing/${l.id}">
+  const vac = vacInfo(l);
+  return `<a class="card${vac.full ? ' occupied' : ''}" href="#/listing/${l.id}">
     <div class="cph">${l.thumb ? `<img loading="lazy" src="${l.thumb}" alt="${esc(l.title)}">` : `<div class="cph-empty">${ic('photo')}</div>`}
       <span class="wm"></span>
       ${boosted ? `<span class="badge-boost">${ic('bolt')}BOOSTED</span>` : ''}
+      ${vac.badge}
     </div>
     <div class="cbody">
       <div class="cprice">${kes(l.rent)}<span>/${perShort(l.period)}</span></div>

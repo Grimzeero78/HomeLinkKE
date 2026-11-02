@@ -64,6 +64,7 @@ async function viewCreate(id) {
       </select>
       <p class="hint-t">Boosts are also targeted to this town — renters browsing ${esc(L.town || 'your town')} see boosted houses on top.</p>
       ${txt('units', 'Total units in the compound', 'e.g. 6', 'number')}
+      <p class="hint-t">Renters see exactly how many units are vacant — start with all of them vacant, then update the count anytime in <b>My listings</b> as houses fill.</p>
       ${sel('furnishing', 'Furnishing', FURN)}
       ${sel('floor', 'Floor', FLOORS)}` },
     { t: 'Location', html: () => `

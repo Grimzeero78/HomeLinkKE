@@ -102,6 +102,11 @@ textarea.inp{min-height:84px;resize:vertical}
 .pill-o{background:var(--ember-mist);color:var(--ember-deep)}
 .pill-r{background:var(--danger-bg);color:var(--bad)}
 .pill-x{background:var(--soft);color:var(--ink2)}
+.pill-vac{background:var(--pine-accent);color:#fff}
+.pill-full{background:var(--bad);color:#fff}
+.vac-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.vac-lab{font-size:12.5px;font-weight:600;color:var(--ink2);min-width:110px}
+.vac-lab b{color:var(--pine-ink)}
 
 /* ---------- cards / grids ---------- */
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
@@ -114,6 +119,13 @@ textarea.inp{min-height:84px;resize:vertical}
 .badge-boost{position:absolute;top:8px;left:8px;display:inline-flex;align-items:center;gap:4px;background:var(--ember);color:#fff;
   font-size:10.5px;font-weight:800;padding:4px 8px;border-radius:999px}
 .badge-boost svg{width:11px;height:11px}
+.badge-vac{position:absolute;bottom:8px;left:8px;display:inline-flex;align-items:center;gap:4px;color:#fff;
+  font-size:10.5px;font-weight:800;letter-spacing:.03em;padding:4px 9px;border-radius:999px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.badge-vac svg{width:11px;height:11px}
+.badge-vac.open{background:var(--pine-accent)}
+.badge-vac.full{background:var(--bad)}
+.badge-vac .bv-of{font-weight:600;opacity:.85;letter-spacing:0;margin-left:2px}
+.card.occupied .cph img,.card.occupied .cph-empty{filter:grayscale(.6) opacity(.8)}
 .cbody{padding:10px 12px 12px}
 .cprice{font-family:var(--disp);font-weight:800;font-size:16.5px;color:var(--pine-ink)}
 .cprice span{font-size:11.5px;color:var(--ink3);font-weight:600;font-family:var(--body)}
@@ -470,6 +482,7 @@ html[data-theme="dark"] .hero-chips .chip.on,html[data-theme="dark"] .hero-chips
 html[data-theme="dark"] .gal-nav{background:rgba(20,23,19,.85);color:#fff}
 html[data-theme="dark"] .photo-x{background:rgba(0,0,0,.75)}
 html[data-theme="dark"] .badge-boost,html[data-theme="dark"] .bn-badge,html[data-theme="dark"] .conv-un,html[data-theme="dark"] .adm-dot{color:#fff}
+html[data-theme="dark"] .badge-vac.open,html[data-theme="dark"] .pill-vac{color:#08130c}
 /* MAPS STAY WHITE IN DARK MODE (owner request): the Google map keeps its normal
    light look in both themes — no tile inversion, no dark popups. Accuracy and
    readability of the real map beat theme consistency, so no dark overrides here. */
