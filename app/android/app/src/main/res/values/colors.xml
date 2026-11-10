@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- HuntInKE brand -->
+    <color name="pine">#0E5A33</color>
+    <color name="pine_deep">#0A3D24</color>
+    <color name="ember">#E0620F</color>
+    <color name="cream">#F6F3EA</color>
+    <color name="ic_launcher_background">#0E5A33</color>
+</resources>

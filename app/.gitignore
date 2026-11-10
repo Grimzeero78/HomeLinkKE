@@ -1,0 +1,40 @@
+# Flutter/Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android build intermediates (keep android/ committed)
+android/.gradle/
+android/local.properties
+android/app/.cxx/
+*.keystore
+**/android/key.properties
+
+# iOS (not shipped in v1 — add via: flutter create --platforms=ios .)
+ios/
+macos/
+linux/
+windows/
+web/
+
+# Generated on YOUR machine by "flutter create" (kept out of git so pulls stay clean)
+.metadata
+pubspec.lock
+android/build.gradle
+android/settings.gradle
+android/gradle.properties
+android/gradle/
+android/gradlew
+android/gradlew.bat
+android/app/build.gradle
+android/app/build.gradle.kts
+android/app/src/main/kotlin/

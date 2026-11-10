@@ -1,0 +1,51 @@
+=====================================================================
+ HUNTIN KE - PLAY STORE CHECKLIST (do this when ready to upload)
+=====================================================================
+
+ALREADY DONE FOR YOU (nothing to change):
+  [x] Package name: com.huntin.ke  (Play Store accepts this)
+  [x] App name on the phone: "HuntIn KE"
+  [x] Launcher icon: all sizes + adaptive icon (Android 8+)
+  [x] 512x512 Play Store icon: assets/icon/playstore-512.png
+  [x] Notifications with Android 13+ permission
+  [x] Internet, location, camera/photo permissions in the manifest
+
+STILL NEEDED BEFORE UPLOAD (quick, ask me and I walk you through):
+
+1. SIGNING KEY (one time, 10 minutes)
+   Run this in a terminal, answer the questions, REMEMBER the password:
+
+     keytool -genkey -v -keystore huntin-upload.jks -keyalg RSA -keysize 2048 -validity 10000 -alias huntin
+
+   Put huntin-upload.jks inside the android/app folder, create a file
+   android/key.properties with:
+
+     storePassword=YOUR_PASSWORD
+     keyPassword=YOUR_PASSWORD
+     keyAlias=huntin
+     storeFile=huntin-upload.jks
+
+   Then the release build must use it: open android/app/build.gradle
+   (or build.gradle.kts) and add the signingConfig for release.
+   >>> Easiest: message me "play store signing" and I give you the
+   >>> exact file for your flutter version.
+
+2. BUILD THE UPLOAD FILE (Play Store wants .aab, not .apk):
+
+     flutter build appbundle --release
+
+   Output: build\app\outputs\bundle\release\app-release.aab
+
+3. PLAY CONSOLE (play.google.com/console, $25 one-time fee):
+   - Create app "HuntIn KE", category House & Home / Lifestyle
+   - Upload app-release.aab
+   - Screenshots: run the app, screenshot home + search + listing +
+     chat + post screens (min 2, phone screenshots)
+   - Short description + full description (I can write these for you)
+   - Privacy policy URL: https://homelinkke.pages.dev/privacy
+     (the app already has a privacy screen linking here)
+   - Content rating questionnaire, target audience, data safety form
+
+4. VERSION UPGRADES LATER:
+   Change "version: 1.0.0+1" in pubspec.yaml -> 1.0.1+2 etc.
+   (+N must always grow), rebuild appbundle, upload again.
