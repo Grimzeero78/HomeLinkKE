@@ -65,10 +65,12 @@ async function viewHome() {
 
   if (pos) {
     const withD = items.filter(l => l.lat != null && l.lng != null)
-      .map(l => ({ l, d: distMeters(pos, l) })).sort((a, b) => a.d - b.d).slice(0, 8);
+      .map(l => ({ l, d: distMeters(pos, l) }))
+      .filter(x => x.d <= 7000) // "near you" = vacant houses within a 7 km radius only
+      .sort((a, b) => a.d - b.d).slice(0, 8);
     nearEl.innerHTML = `<div class="sec-h"><h2>${ic('pin')} Houses near you</h2><a href="#/map">Open map →</a></div>`
       + (withD.length ? `<div class="grid">${withD.map(x => listingCard(x.l)).join('')}</div>`
-        : `<div class="empty">${ic('pin')}<h3>Nothing pinned near you yet</h3><p>Landlords in your area have not posted yet. Try browsing ${esc(myTown || 'your town')} or search another town.</p></div>`);
+        : `<div class="empty">${ic('pin')}<h3>No vacant houses within 7 km of you yet</h3><p>Nothing pinned near your location so far. Try browsing ${esc(myTown || 'your town')} or search another town.</p></div>`);
   } else if (myTown) {
     const inTown = items.filter(l => l.town === myTown).slice(0, 8);
     nearEl.innerHTML = `<div class="sec-h"><h2>Houses in ${esc(myTown)}</h2><a href="#/search">See all →</a></div>`

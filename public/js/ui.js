@@ -73,7 +73,7 @@ const WIFI = ['Included in rent', 'Available but paid separately', 'Not availabl
 const GARBAGE = ['Included', 'Not included', 'Paid separately'];
 const BACKUP = ['None', 'Solar', 'Generator'];
 const BATHS = ['1', '2', '3', '4+']; // bathroom COUNT — no more "shared/communal" hostel wording
-const TENANTS = ['Anyone', 'Family', 'Singles / couples', 'Working professionals'];
+const TENANTS = ['Anyone', 'Students', 'Family', 'Singles / couples', 'Working professionals'];
 const ROADS = ['Tarmac', 'Murram', 'Footpath only'];
 const SECURITY = ['Guard', 'Gate lock', 'CCTV'];
 const FLOORS = ['Ground', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
@@ -85,11 +85,11 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const kes = n => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 const shortK = n => { const v = n / 1000; return (v >= 10 ? Math.round(v) : v.toFixed(1).replace('.0', '')) + 'k'; };
 const perShort = p => !p ? 'mo' : p.startsWith('Per Month') ? 'mo' : p.startsWith('Per Semester') ? 'sem' : 'yr';
-// floors used to be a fixed list ('1st'…'10th floor') — now a free number (some buildings
-// go past 10). Legacy values still render as they were stored.
+// "Floors" means HOW MANY FLOORS THE BUILDING HAS (a compound can be G+20) — not which
+// floor the vacant room sits on. Legacy values ('Ground', '2nd floor', old numbers) still render.
 const floorLabel = f => { f = String(f || '').trim();
-  if (!f || f === 'Ground' || f === 'Ground floor') return 'Ground';
-  if (/^\d+$/.test(f)) return f === '0' ? 'Ground' : 'Floor ' + f;
+  if (!f || f === 'Ground' || f === 'Ground floor') return 'Ground only';
+  if (/^\d+$/.test(f)) return f === '0' ? 'Ground only' : f;
   return f.replace(/ floor$/, ''); };
 
 function distMeters(a, b) {
@@ -359,21 +359,20 @@ async function refreshAdminCounts() {
 // ---------- listing card ----------
 // vacancy — the #1 thing renters scan for. Never hide it, never make it tiny:
 //   0 vacant -> red ALL OCCUPIED badge + card photo dimmed
-//   some vacant -> green badge with the exact count ("3 VACANT of 6" / "VACANT")
+//   some vacant -> green badge with the exact count ("3 VACANT")
+// Vacancy is vacancy-first: the landlord writes ONLY how many houses are free right
+// now (20 rooms, 3 free → he writes 3). Wording everywhere is absolute — "3 houses
+// vacant" — never a ratio like "3 of 3".
 function vacInfo(l) {
-  const u = Math.max(1, l.units || 1);
-  const v = l.unitsVacant == null ? (l.status === 'TAKEN' ? 0 : u)
-    : Math.max(0, Math.min(l.unitsVacant, u));
+  const v = l.unitsVacant == null ? (l.status === 'TAKEN' ? 0 : Math.max(1, l.units || 1))
+    : Math.max(0, l.unitsVacant);
   const full = v <= 0 || l.status === 'TAKEN';
   return {
-    u, v, full,
-    label: full ? (u > 1 ? `All ${u} units occupied` : 'Occupied')
-      : (u <= 1 ? 'Vacant now' : `${v} of ${u} units vacant`),
+    u: Math.max(1, l.units || 1), v, full,
+    label: full ? 'All occupied' : (v === 1 ? '1 house vacant' : v + ' houses vacant'),
     badge: full
       ? `<span class="badge-vac full">${ic('x')} ALL OCCUPIED</span>`
-      : (u <= 1
-        ? `<span class="badge-vac open">${ic('check')} VACANT</span>`
-        : `<span class="badge-vac open">${ic('check')} ${v} VACANT<span class="bv-of">of ${u}</span></span>`),
+      : `<span class="badge-vac open">${ic('check')} ${v} VACANT</span>`,
   };
 }
 function listingCard(l) {

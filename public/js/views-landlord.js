@@ -43,11 +43,11 @@ async function viewMyListings() {
         </div>
         <div class="vac-row" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
           <span style="font-size:12px;font-weight:700;color:var(--ink3)">VACANCY</span>
-          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.max(0, vac.v - 1)}" ${vac.v <= 0 ? 'disabled' : ''} aria-label="Mark one unit taken">−1</button>
-          <span class="vac-lab">${vac.full ? `<b>Full</b> — all ${vac.u} occupied` : `<b>${vac.v}</b> of ${vac.u} vacant`}</span>
-          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.min(vac.u, vac.v + 1)}" ${vac.v >= vac.u ? 'disabled' : ''} aria-label="Mark one unit vacant">+1</button>
+          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.max(0, vac.v - 1)}" ${vac.v <= 0 ? 'disabled' : ''} aria-label="One house was taken">−1</button>
+          <span class="vac-lab">${vac.full ? '<b>All occupied</b>' : `<b>${vac.v}</b> ${vac.v === 1 ? 'house' : 'houses'} vacant`}</span>
+          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.min(50, vac.v + 1)}" ${vac.v >= 50 ? 'disabled' : ''} aria-label="One house is free again">+1</button>
           ${vac.full
-            ? `<button class="btn btn-outline btn-sm" data-vac="${l.id}:${vac.u}">Reopen all</button>`
+            ? `<button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.max(1, vac.u)}">Reopen</button>`
             : `<button class="btn btn-outline btn-sm" data-vac="${l.id}:0">All taken</button>`}
         </div>
       </div>`;

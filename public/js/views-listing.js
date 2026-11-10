@@ -69,10 +69,9 @@ async function viewListing(id) {
 
       <div class="sec-block"><h3>Key facts</h3><div class="dgrid">
         <div class="dcell"><div class="k">Type</div><div class="v">${esc(l.ptype)}</div></div>
-        <div class="dcell"><div class="k">Units in compound</div><div class="v">${l.units}</div></div>
-        <div class="dcell"><div class="k">Vacant now</div><div class="v">${vac.full ? '0 — all occupied' : (vac.u > 1 ? vac.v + ' of ' + vac.u : 'Yes — this one')}</div></div>
+        <div class="dcell"><div class="k">Vacant now</div><div class="v">${vac.full ? 'All occupied now' : (vac.v === 1 ? '1 house is vacant' : vac.v + ' houses are vacant')}</div></div>
         <div class="dcell"><div class="k">Furnishing</div><div class="v">${esc(l.furnishing)}</div></div>
-        <div class="dcell"><div class="k">Floor</div><div class="v">${esc(floorLabel(l.floor))}</div></div>
+        <div class="dcell"><div class="k">Building floors</div><div class="v">${esc(floorLabel(l.floor))}</div></div>
         <div class="dcell"><div class="k">Road access</div><div class="v">${esc(l.road)}</div></div>
         <div class="dcell"><div class="k">Available from</div><div class="v">${fmtAvail(l.availableFrom)}</div></div>
       </div></div>

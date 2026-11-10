@@ -672,7 +672,10 @@ export async function onRequest(context) {
         const total = Math.max(1, N(own.units) || 1);
         let vacant;
         if (b.vacant !== undefined) {
-          vacant = Math.max(0, Math.min(N(b.vacant), total));
+          // vacancy-first: the landlord writes only how many houses are free NOW, and may
+          // raise the count later as more free up — so the cap is a sane 50, not the
+          // number first entered (which was the vacant count, not the compound size)
+          vacant = Math.max(0, Math.min(N(b.vacant), 50));
         } else {
           vacant = b.status === 'TAKEN' ? 0 : total;
         }

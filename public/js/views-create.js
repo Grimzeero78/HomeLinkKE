@@ -64,12 +64,12 @@ async function viewCreate(id) {
       <div class="chips town-pick" id="town-list"></div>
       <p class="hint-t" id="town-hint">${L.town ? `${ic('check')} <b>${esc(L.town)}</b> selected — tap another town to change it.` : 'Start typing and tap your town from the list.'}</p>
       <p class="hint-t">Boosts are also targeted to this town — renters browsing ${esc(L.town || 'your town')} see boosted houses on top.</p>
-      ${txt('units', 'How many vacant units are available?', 'e.g. 3 vacant now', 'number')}
-      <p class="hint-t">This is the number renters see as VACANT on your card. Post the listing first, then update the count anytime in <b>My listings</b> with the −1 / +1 buttons as houses fill.</p>
+      ${txt('units', 'How many vacant houses are there right now?', 'e.g. 3 — write only the vacant ones', 'number')}
+      <p class="hint-t">Write ONLY the houses that are vacant. The compound has 20 rooms and 3 are free? Write 3. Renters see <b>"3 houses vacant"</b> on your card. Update the count anytime in <b>My listings</b> with the −1 / +1 buttons as houses fill or free up.</p>
       ${sel('furnishing', 'Furnishing', FURN)}
-      <label class="lbl">Which floor is the house on? <span style="font-weight:500">(any floor — 1, 4, 20… leave empty for ground)</span></label>
-      <input class="inp" id="w-floor" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 2 — empty means ground floor" value="${/^\d+$/.test(String(L.floor || '')) ? esc(String(L.floor)) : ''}">
-      <p class="hint-t">Type any floor number — some buildings go past 10. House on the ground? Leave it empty.</p>` },
+      <label class="lbl">How many floors does the building have? <span style="font-weight:500">(any number — 1, 5, 20…)</span></label>
+      <input class="inp" id="w-floor" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 5 — empty means a ground-level house" value="${/^\d+$/.test(String(L.floor || '')) ? esc(String(L.floor)) : ''}">
+      <p class="hint-t">Count the storeys of the whole building — some flats go past 10. A simple ground-level house? Leave it empty.</p>` },
     { t: 'Location', html: () => `
       ${txt('area', 'Estate / area (optional)', 'e.g. Kilimani, Section 9, Milimani')}
       ${txt('landmark', 'Nearest landmark (optional)', 'e.g. opposite Naivas, near the stage')}
@@ -407,7 +407,7 @@ async function viewCreate(id) {
     function drawReview() {
       const rv = v.querySelector('#w-review'); if (!rv) return;
       const rows = [
-        ['Title', L.title], ['Type', L.ptype], ['Town', L.town],
+        ['Title', L.title], ['Type', L.ptype], ['Town', L.town], ['Building floors', floorLabel(L.floor)], ['Vacant houses', L.units ? L.units : ''],
         ['Estate', L.area ? L.area + (L.landmark ? ' — ' + L.landmark : '') : ''],
         ['Rent', L.rent ? kes(L.rent) + ' / ' + (L.period || '').toLowerCase() : ''],
         ['Deposit', L.deposit ? kes(L.deposit) : 'None'],
