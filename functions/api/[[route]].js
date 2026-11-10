@@ -582,8 +582,13 @@ export async function onRequest(context) {
                   o.verify_status AS ownerVerify, o.created_at AS ownerSince
            FROM listings l JOIN users o ON o.id = l.ownerId WHERE l.id = ?`).bind(id).first();
         if (!l) return bad('Listing not found', 404);
-        const isOwner = user && (user.id === l.ownerId || user.role === 'ADMIN');
-        if (l.status === 'REMOVED' && !isOwner) return bad('Listing not found', 404);
+        // isOwner is STRICTLY the real owner — it drives the "This is your listing / Boost it"
+        // notice and every owner-only UI block. Admins must never get it here (bug: admins saw
+        // the boost prompt on other people's listings). Admins can still open REMOVED listings
+        // for moderation via canViewRemoved below.
+        const isOwner = !!(user && user.id === l.ownerId);
+        const canViewRemoved = isOwner || (user && user.role === 'ADMIN');
+        if (l.status === 'REMOVED' && !canViewRemoved) return bad('Listing not found', 404);
         const photos = (await env.DB.prepare('SELECT id, url, thumb FROM photos WHERE listingId = ? ORDER BY idx').bind(id).all()).results || [];
         const similar = await queryListings(env, new URL('http://x/?limit=4'), { similarTo: id, exclude: id });
         const pub = { ...l };
