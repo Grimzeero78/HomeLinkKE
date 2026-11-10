@@ -1,0 +1,70 @@
+== A. bootstrap (test data setup)
+  PASS  [A] site responds 200
+  PASS  [A] register lndla... (LANDLORD)
+  PASS  [A] register lndlb... (LANDLORD)
+  PASS  [A] register seekr... (SEEKER)
+  PASS  [A] landlord A posts a listing
+  PASS  [A] landlord B posts a listing (Chuka)
+== B. security headers (GET /)
+  PASS  [B] Content-Security-Policy present
+  PASS  [B] X-Frame-Options present (anti-clickjacking)
+  PASS  [B] X-Content-Type-Options: nosniff
+  PASS  [B] Referrer-Policy set
+  PASS  [B] Permissions-Policy locks camera/mic
+  PASS  [B] X-Frame-Options value is DENY
+  PASS  [B] API answers JSON with nosniff
+== C. authentication & sessions
+  PASS  [C] no token -> /api/me is 401
+  PASS  [C] forged token -> 401
+  PASS  [C] seeker cannot post a listing (role gate)
+  PASS  [C] anon /api/my/listings -> 401
+  PASS  [C] seeker cannot reach admin API
+  PASS  [C] landlord cannot reach admin API
+  PASS  [C] logout accepted
+  PASS  [C] token is dead server-side after logout
+  PASS  [C] re-login issues a fresh session
+== D. SQL injection
+  PASS  [D] search q="' OR 1=1 --" -> handled, no error
+  PASS  [D] no credential columns leaked
+  PASS  [D] search q="x' UNION SELECT pass_hash FROM users--" -> handled, no error
+  PASS  [D] no credential columns leaked
+  PASS  [D] search q="'; DROP TABLE listings;--" -> handled, no error
+  PASS  [D] no credential columns leaked
+  PASS  [D] listings table alive after DROP attempt
+  PASS  [D] login username "' OR 1=1--" rejected
+  PASS  [D] town filter "Chuka'--" parameterised
+  PASS  [D] listing id path injection rejected (no 500)
+== E. XSS / stored payload safety
+  PASS  [E] payload title accepted as DATA (no crash, no execution)
+  PASS  [E] stored payload served as application/json + nosniff
+  PASS  [E] payload stored verbatim (inert data, never executed server-side)
+  PASS  [E] reflected <script> search -> safe JSON
+== F. IDOR / broken access control
+  PASS  [F] B cannot edit A's listing
+  PASS  [F] B cannot delete A's listing
+  PASS  [F] B cannot boost A's listing
+  PASS  [F] B cannot flip A's listing status
+  PASS  [F] seeker opens a conversation on A1
+  PASS  [F] stranger B cannot open the A-S conversation
+  PASS  [F] stranger B cannot post into that thread
+== G. privacy
+  PASS  [G] anon listing detail hides owner phone
+  PASS  [G] password-hint endpoint rate limited & capped (documented residual risk)
+== H. input validation & upload abuse
+  PASS  [H] rent=0 rejected
+  PASS  [H] negative rent rejected
+  PASS  [H] 3-char title rejected
+  PASS  [H] 10 KB title capped at 90 chars
+  PASS  [H] only 2 photos rejected (min 3)
+  PASS  [H] 9 photos rejected (max 8)
+  PASS  [H] SVG upload rejected (script-capable format)
+  PASS  [H] invalid Kenyan phone rejected at registration
+== I. rate limiting (brute force)
+  PASS  [I] login brute force locked with 429
+  PASS  [I] hint enumeration locked with 429
+  PASS  [I] registration flood locked with 429
+  PASS  [I] message spam locked with 429 (30/min)
+
+================================================================
+RESULT: 57 passed / 0 failed  (57 checks)
+================================================================
