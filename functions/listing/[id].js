@@ -11,11 +11,22 @@ export async function onRequestGet({ env, params }) {
   const id = Number(Array.isArray(params.id) ? params.id[0] : params.id);
   const appUrl = appUrlFor(id || 0);
   if (!id || id < 1) return page('<h1>Listing not found</h1>', 'Listing not found — HuntInKE', 'The listing may have been taken down.', 404);
-  const l = await env.DB.prepare(
-    `SELECT l.id, l.title, l.ptype, l.rent, l.period, l.town, l.area, l.landmark, l.tags, l.units, l.unitsVacant,
-            l.status, l.furnishing, l.water, l.createdAt, o.name AS owner, o.verify_status AS verified
-     FROM listings l JOIN users o ON o.id = l.ownerId
-     WHERE l.id = ? AND l.status != 'REMOVED'`).bind(id).first();
+  // tags column is added by the API's schema migration — on an un-migrated DB the
+  // full query would throw, so fall back to the same query without tags
+  let l = null;
+  try {
+    l = await env.DB.prepare(
+      `SELECT l.id, l.title, l.ptype, l.rent, l.period, l.town, l.area, l.landmark, l.tags, l.units, l.unitsVacant,
+              l.status, l.furnishing, l.water, l.createdAt, o.name AS owner, o.verify_status AS verified
+       FROM listings l JOIN users o ON o.id = l.ownerId
+       WHERE l.id = ? AND l.status != 'REMOVED'`).bind(id).first();
+  } catch (e) {
+    l = await env.DB.prepare(
+      `SELECT l.id, l.title, l.ptype, l.rent, l.period, l.town, l.area, l.landmark, l.units, l.unitsVacant,
+              l.status, l.furnishing, l.water, l.createdAt, o.name AS owner, o.verify_status AS verified
+       FROM listings l JOIN users o ON o.id = l.ownerId
+       WHERE l.id = ? AND l.status != 'REMOVED'`).bind(id).first();
+  }
   if (!l) return page('<h1>Listing not found</h1><p>It may have been taken down.</p>', 'Listing not found — HuntInKE', 'The listing may have been taken down.', 404);
 
   const ph = await env.DB.prepare("SELECT COALESCE(NULLIF(thumb, ''), url) AS u FROM photos WHERE listingId = ? ORDER BY idx LIMIT 1").bind(id).first();
