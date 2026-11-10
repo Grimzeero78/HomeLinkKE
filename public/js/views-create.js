@@ -67,7 +67,9 @@ async function viewCreate(id) {
       ${txt('units', 'How many vacant units are available?', 'e.g. 3 vacant now', 'number')}
       <p class="hint-t">This is the number renters see as VACANT on your card. Post the listing first, then update the count anytime in <b>My listings</b> with the −1 / +1 buttons as houses fill.</p>
       ${sel('furnishing', 'Furnishing', FURN)}
-      ${sel('floor', 'Floor', FLOORS.map(f => f === 'Ground' ? 'Ground floor' : f + ' floor'), 'Leave it as Ground floor if the house is on the ground.')}` },
+      <label class="lbl">Which floor is the house on? <span style="font-weight:500">(any floor — 1, 4, 20… leave empty for ground)</span></label>
+      <input class="inp" id="w-floor" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 2 — empty means ground floor" value="${/^\d+$/.test(String(L.floor || '')) ? esc(String(L.floor)) : ''}">
+      <p class="hint-t">Type any floor number — some buildings go past 10. House on the ground? Leave it empty.</p>` },
     { t: 'Location', html: () => `
       ${txt('area', 'Estate / area (optional)', 'e.g. Kilimani, Section 9, Milimani')}
       ${txt('landmark', 'Nearest landmark (optional)', 'e.g. opposite Naivas, near the stage')}
@@ -92,12 +94,12 @@ async function viewCreate(id) {
       </div>` },
     { t: 'Pricing', html: () => `
       ${txt('rent', 'Rent (KES)', 'e.g. 6500', 'number')}
-      ${sel('period', 'Payment period', PERIODS)}
+      ${sel('period', 'Payment period', (PERIODS.includes(L.period) ? PERIODS : [L.period, ...PERIODS]), 'Per Month for normal houses — Per Semester fits student hostels near campus.')}
       ${txt('deposit', 'Deposit (KES) — optional', 'e.g. 6500 — leave empty if none', 'number')}
       ${txt('fees', 'Move-in fees (optional)', 'e.g. Water connection KES 500 — or "None"')}
       <label class="check"><input type="checkbox" id="w-neg" ${L.negotiable ? 'checked' : ''}> Rent is negotiable</label>
       <label class="lbl">Payment terms & house rules (optional)</label>
-      <textarea class="inp" data-k="terms" placeholder="e.g. Rent due by 5th of the month. One month deposit."> ${esc(L.terms)}</textarea>` },
+      <textarea class="inp" data-k="terms" placeholder="e.g. Rent due by 5th of the month. One month deposit.">${esc(L.terms)}</textarea>` },
     { t: 'Utilities', html: () => `
       ${sel('water', 'Water', WATER)}
       <div id="w-wcost">${txt('waterCost', 'Water cost', 'e.g. KES 200 per month or per jerrican — optional')}</div>
@@ -138,8 +140,8 @@ async function viewCreate(id) {
     { t: 'Photos & publish', html: () => `
       <label class="lbl">Photos (3–8) — first photo is the cover</label>
       <div class="photo-grid" id="w-photos"></div>
-      <input type="file" id="w-file" accept="image/*" multiple hidden>
-      <input type="file" id="w-cam" accept="image/*" capture="environment" multiple hidden>
+      <input type="file" id="w-file" accept="image/*" multiple class="file-ghost">
+      <input type="file" id="w-cam" accept="image/*" capture="environment" class="file-ghost">
       <p class="hint-t" style="margin-top:8px">On your phone, <b>Take photo</b> opens the camera directly. Photos are compressed in your browser before upload. Add clear daylight photos — listings with good photos get 3× more chats.</p>
       <div class="sec-block" style="margin-top:14px"><h3>Review</h3><div id="w-review"></div></div>` },
   ];
@@ -221,6 +223,8 @@ async function viewCreate(id) {
       else L.security = L.security.filter(x => x !== val);
     };
 
+    const flIn = v.querySelector('#w-floor');
+    if (flIn) flIn.addEventListener('input', () => { L.floor = flIn.value === '' ? 'Ground' : String(parseInt(flIn.value, 10)); });
     if (step === 0) wireTownPicker();
     if (step === 1) wireLocation();
     if (step === 7) wirePhotos();
@@ -381,6 +385,7 @@ async function viewCreate(id) {
       drawReview();
     };
     const processFiles = async files => {
+      let ok = 0;
       for (const f of [...files].filter(f => f.type.startsWith('image/'))) {
         if (L.photos.length >= 8) { toast('Maximum 8 photos', true); break; }
         toast('Processing photo…');
@@ -388,13 +393,17 @@ async function viewCreate(id) {
           const full = await compressTo(f, 150, 1150, 0.72);
           let th = '';
           try { th = await shrinkDataUrl(full, 340, 0.6); } catch (e2) { /* card falls back to full */ }
-          L.photos.push(full); L.thumbs.push(th);
+          L.photos.push(full); L.thumbs.push(th); ok++;
         } catch (e) { toast(e.message, true); }
       }
+      if (ok) toast(ok + (ok === 1 ? ' photo' : ' photos') + ' added — ' + L.photos.length + '/8');
       draw();
     };
-    fileIn.onchange = async () => { const fs = fileIn.files; fileIn.value = ''; await processFiles(fs); };
-    camIn.onchange = async () => { const fs = camIn.files; camIn.value = ''; await processFiles(fs); };
+    // BUGFIX: input.files is a LIVE FileList — copying the reference then clearing
+    // input.value emptied the SAME object before processing, so photos never arrived.
+    // Copy to a real array FIRST, then clear the input.
+    fileIn.onchange = async () => { const fs = [...fileIn.files]; fileIn.value = ''; await processFiles(fs); };
+    camIn.onchange = async () => { const fs = [...camIn.files]; camIn.value = ''; await processFiles(fs); };
     function drawReview() {
       const rv = v.querySelector('#w-review'); if (!rv) return;
       const rows = [

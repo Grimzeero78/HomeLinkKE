@@ -66,7 +66,7 @@ const TOWNS = [
 // replaced by the renter's own position (GPS) and the town they are browsing.
 const KENYA_CENTER = { lat: -0.0236, lng: 37.9062 }; // geographic centre of Kenya
 const FURN = ['Furnished', 'Semi-furnished', 'Unfurnished'];
-const PERIODS = ['Per Month', 'Per Year'];
+const PERIODS = ['Per Month', 'Per Semester'];
 const WATER = ['Included in rent', 'Pay separately', 'Rationed'];
 const ELEC = ['Included in rent', 'Own token meter', 'Shared meter', 'Prepaid'];
 const WIFI = ['Included in rent', 'Available but paid separately', 'Not available'];
@@ -85,6 +85,12 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const kes = n => 'KES ' + Number(n || 0).toLocaleString('en-KE');
 const shortK = n => { const v = n / 1000; return (v >= 10 ? Math.round(v) : v.toFixed(1).replace('.0', '')) + 'k'; };
 const perShort = p => !p ? 'mo' : p.startsWith('Per Month') ? 'mo' : p.startsWith('Per Semester') ? 'sem' : 'yr';
+// floors used to be a fixed list ('1st'…'10th floor') — now a free number (some buildings
+// go past 10). Legacy values still render as they were stored.
+const floorLabel = f => { f = String(f || '').trim();
+  if (!f || f === 'Ground' || f === 'Ground floor') return 'Ground';
+  if (/^\d+$/.test(f)) return f === '0' ? 'Ground' : 'Floor ' + f;
+  return f.replace(/ floor$/, ''); };
 
 function distMeters(a, b) {
   const R = 6371000, dLa = (b.lat - a.lat) * Math.PI / 180, dLo = (b.lng - a.lng) * Math.PI / 180;

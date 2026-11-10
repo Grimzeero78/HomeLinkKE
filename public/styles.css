@@ -374,6 +374,11 @@ textarea.inp{min-height:84px;resize:vertical}
 /* fix: the hidden attribute must always win over display rules (stuck dark lightbox) */
 [hidden]{display:none!important}
 
+/* offscreen-but-rendered file inputs: some mobile browsers (in-app browsers, older
+   Samsung Internet, Opera Mini) refuse .click() on display:none inputs, so the photo
+   chooser / camera never opened — keep them rendered but out of view instead */
+.file-ghost{position:fixed;left:-9999px;top:0;width:1px;height:1px;opacity:0;pointer-events:none}
+
 /* ---------- HuntInKE maps (Google tiles on Leaflet) ---------- */
 .gmap{position:relative;z-index:0;isolation:isolate;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#e5e8ea}
 .gmap-loading{display:grid;place-items:center;min-height:220px}
