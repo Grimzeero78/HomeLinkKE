@@ -1,0 +1,66 @@
+/*
+ * REFERENCE ONLY — android/app/build.gradle
+ *
+ * Your Flutter project already has this file. Keep YOUR file and change ONLY
+ * these three things (see README step 3):
+ *
+ *   1. defaultConfig → applicationId "com.huntinke.app"
+ *   2. defaultConfig → minSdk = 24
+ *   3. (later, before Play upload) the signingConfigs block below
+ */
+
+plugins {
+    id "com.android.application"
+    id "kotlin-android"
+    id "dev.flutter.flutter-gradle-plugin"
+}
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+android {
+    namespace = "com.huntinke.app"
+
+    compileSdk = flutter.compileSdkVersion
+    ndkVersion = flutter.ndkVersion
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
+    }
+
+    defaultConfig {
+        applicationId = "com.huntinke.app"   // ← MUST be exactly this (Play Store identity)
+        minSdk = 24                          // Android 7.0+ (~98% of phones in Kenya)
+        targetSdk = flutter.targetSdkVersion
+        versionCode = flutter.versionCode    // comes from pubspec.yaml (1.0.0+1)
+        versionName = flutter.versionName
+    }
+
+    // ---- Play Store release signing (add key.properties before uploading) ----
+    signingConfigs {
+        release {
+            keyAlias = keystoreProperties['keyAlias']
+            keyPassword = keystoreProperties['keyPassword']
+            storeFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
+            storePassword = keystoreProperties['storePassword']
+        }
+    }
+
+    buildTypes {
+        release {
+            // uses key.properties when it exists, otherwise debug-signed for local testing
+            signingConfig = keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+flutter {
+    source = "../.."
+}
