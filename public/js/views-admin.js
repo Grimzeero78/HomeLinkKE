@@ -75,9 +75,11 @@ async function viewAdmin(tab) {
     body.innerHTML = r.items.length ? r.items.map(b => `
       <div class="row-card" data-b="${b.id}">
         <div class="row-title">${esc(b.ltitle)}</div>
-        <div class="row-sub">by @${esc(b.uname)} · targets <b>${esc(b.town || '—')}</b> · requested ${timeAgo(b.createdAt)}
-          ${b.mpesaCode ? ` · M-Pesa code: <b>${esc(b.mpesaCode)}</b>` : ''}</div>
-        <p class="hint-t" style="margin-top:6px">Check that KES 200 arrived on ${esc(paybill)} (Isaac Bridget) for this code, then activate.</p>
+        <div class="row-sub">by @${esc(b.uname)}${b.uphone ? ` · landlord phone <b>${esc(b.uphone)}</b>` : ''} · targets <b>${esc(b.town || '—')}</b> · requested ${timeAgo(b.createdAt)}</div>
+        <div class="row-sub" style="margin-top:3px">
+          ${b.mpesaCode ? `M-Pesa code: <b>${esc(b.mpesaCode)}</b>` : 'No code given'}
+          ${b.senderName ? ` · sent from: <b>${esc(b.senderName)}</b>` : ''}</div>
+        <p class="hint-t" style="margin-top:6px">Check that KES 200 arrived on ${esc(paybill)} (Isaac Bridget) — match the code, or the sender name against the landlord's phone above — then activate.</p>
         <div class="row-acts">
           <button class="btn btn-green btn-sm" data-d="approve">${ic('check')} Confirm & boost 7 days</button>
           <button class="btn btn-danger btn-sm" data-d="decline">Decline</button>

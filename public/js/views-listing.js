@@ -77,6 +77,8 @@ async function viewListing(id) {
         <div class="dcell"><div class="k">Available from</div><div class="v">${fmtAvail(l.availableFrom)}</div></div>
       </div></div>
 
+      ${(l.tags || '').trim() ? `<div class="sec-block"><h3>Search tags</h3><div class="chips">${l.tags.split(',').map(t => t.trim()).filter(Boolean).map(t => `<span class="chip" style="pointer-events:none">${esc(t)}</span>`).join('')}</div></div>` : ''}
+
       <div class="sec-block"><h3>Location</h3>
         ${coords ? `
         <div id="lmap" style="height:300px"></div>
@@ -99,7 +101,7 @@ async function viewListing(id) {
 
       <div class="sec-block"><h3>Inside the unit</h3>
         ${/^\d/.test(l.bath || '') ? kv('Bathrooms', esc(l.bath)) : ''}
-        ${(l.ensuite === 'Yes' || l.bath === 'Ensuite (own)') ? kv('Own bathroom', 'Yes — en-suite') : ''}
+        ${(l.ensuite === 'Yes' || l.bath === 'Ensuite (own)') ? kv('Bathroom inside', 'Yes — self-contained') : ''}
         ${(l.kitchen === 'Yes' || l.kitchen === 'Own') ? kv('Own kitchen', 'Yes, inside the unit') : ''}
         ${l.parking === 'Yes' ? kv('Parking', 'Available') : ''}
         ${kv('Balcony', y(l.balcony))}

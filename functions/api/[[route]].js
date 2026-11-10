@@ -234,7 +234,7 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('gmaps_key','');
 `;
 
 let schemaReady = null;
-const SCHEMA_VER = '4';
+const SCHEMA_VER = '5';
 
 async function ensureSchema(env) {
   if (!schemaReady) {
@@ -271,6 +271,13 @@ async function ensureSchema(env) {
         try { await env.DB.prepare('ALTER TABLE listings ADD COLUMN unitsVacant INTEGER').run(); } catch (e) { /* column already exists */ }
         await env.DB.prepare("UPDATE listings SET unitsVacant = CASE WHEN status = 'TAKEN' THEN 0 ELSE COALESCE(units, 1) END WHERE unitsVacant IS NULL").run();
       }
+      if (ver < 5) {
+        // v5 — landlord search tags (renters find listings by words like "near JKUAT")
+        //   + boost senderName: the M-Pesa registered name, so admin can match the payment
+        //   to a person even when the landlord forgets to copy the transaction code.
+        try { await env.DB.prepare("ALTER TABLE listings ADD COLUMN tags TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* column already exists */ }
+        try { await env.DB.prepare("ALTER TABLE boosts ADD COLUMN senderName TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* column already exists */ }
+      }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_ver','" + SCHEMA_VER + "')").run();
     })().catch(e => { schemaReady = null; throw e; });
   }
@@ -280,14 +287,14 @@ async function ensureSchema(env) {
 // ---------- listing field mapping (camelCase = D1 columns) ----------
 const LSTR = ['title', 'ptype', 'furnishing', 'floor', 'town', 'area', 'landmark', 'road', 'period', 'terms',
   'water', 'waterCost', 'waterSched', 'elec', 'elecCost', 'wifiCost', 'wifiProvider', 'garbage', 'backup',
-  'bath', 'tenantPref', 'availableFrom', 'contactPhone'];
+  'bath', 'tenantPref', 'availableFrom', 'contactPhone', 'tags'];
 const LYNN = ['waterTank', 'negotiable', 'balcony', 'tile', 'ceiling', 'wardrobe', 'hotShower', 'pets', 'ensuite', 'kitchen', 'parking'];
 const LNUM = ['units', 'unitsVacant', 'rent', 'deposit'];
 
 function listingCols(b, base) {
   // length caps: without them an authenticated landlord could store megabyte strings in
   // title/terms/etc and blow the D1 storage quota (or break card layouts) with one request
-  const LCAPS = { title: 90, landmark: 120, terms: 1200, fees: 200, contactPhone: 20, availableFrom: 40, period: 40, waterSched: 80, wifiProvider: 40 };
+  const LCAPS = { title: 90, landmark: 120, terms: 1200, fees: 200, contactPhone: 20, availableFrom: 40, period: 40, waterSched: 80, wifiProvider: 40, tags: 220 };
   const out = {};
   for (const k of LSTR) if (b[k] !== undefined) out[k] = S(b[k]).slice(0, LCAPS[k] || 60);
   for (const k of LYNN) if (b[k] !== undefined) out[k] = S(b[k]).slice(0, 12); // Yes/No-style fields
@@ -321,7 +328,7 @@ async function attachThumbs(env, rows, keyField = 'id', outField = 'thumb') {
 
 const CARD_COLS = `l.id, l.title, l.ptype, l.units, l.unitsVacant, l.rent, l.period, l.town, l.area, l.landmark, l.lat, l.lng,
   l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.ensuite, l.parking, l.backup, l.garbage, l.tenantPref, l.availableFrom,
-  l.status, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
+  l.tags, l.status, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
 
 function like(v) { return '%' + S(v).replace(/[%_]/g, ' ') + '%'; }
 
@@ -333,7 +340,7 @@ async function queryListings(env, url, opts = {}) {
 
   if (opts.mine && opts.user) { w.length = 0; w.push('l.ownerId = ?'); p.push(opts.user.id); }
   const s = S(q.get('q'));
-  if (s) add('(l.title LIKE ? OR l.town LIKE ? OR l.area LIKE ? OR l.landmark LIKE ?)', like(s), like(s), like(s), like(s));
+  if (s) add('(l.title LIKE ? OR l.town LIKE ? OR l.area LIKE ? OR l.landmark LIKE ? OR l.tags LIKE ?)', like(s), like(s), like(s), like(s), like(s));
   if (q.get('town')) add('l.town = ?', S(q.get('town')));
   if (q.get('area')) add('l.area LIKE ?', like(q.get('area')));
   if (q.get('ptype')) add('l.ptype = ?', S(q.get('ptype')));
@@ -702,8 +709,11 @@ export async function onRequest(context) {
         if (pend) return bad('You already have a boost awaiting confirmation');
         if (!rateLimit('boost:' + u.id, 5, 3600_000)) return tooMany();
         const b = await json_();
-        await env.DB.prepare('INSERT INTO boosts (listingId, userId, town, mpesaCode, createdAt) VALUES (?,?,?,?,?)')
-          .bind(id, u.id, S(own.town), S(b.mpesaCode).slice(0, 40), Date.now()).run();
+        // the landlord must leave a trail: the M-Pesa code OR the name the money came from —
+        // otherwise the admin has nothing to match the KES 200 against and confirms blind
+        if (!S(b.mpesaCode) && !S(b.senderName)) return bad('Add the M-Pesa confirmation code or the name you sent from');
+        await env.DB.prepare('INSERT INTO boosts (listingId, userId, town, mpesaCode, senderName, createdAt) VALUES (?,?,?,?,?,?)')
+          .bind(id, u.id, S(own.town), S(b.mpesaCode).slice(0, 40), S(b.senderName).slice(0, 60), Date.now()).run();
         return ok();
       }
       // browse/search
@@ -972,8 +982,9 @@ export async function onRequest(context) {
         return ok({ verifyStatus: st });
       }
       if (seg[1] === 'boosts' && method === 'GET') {
+        // uphone = landlord's own number — admin matches it against the M-Pesa sender name
         const rows = (await env.DB.prepare(
-          `SELECT b.*, l.title AS ltitle, us.username AS uname FROM boosts b
+          `SELECT b.*, l.title AS ltitle, us.username AS uname, us.phone AS uphone FROM boosts b
            JOIN listings l ON l.id = b.listingId JOIN users us ON us.id = b.userId
            WHERE b.status = 'PENDING' ORDER BY b.createdAt ASC`).all()).results || [];
         return ok({ items: rows });

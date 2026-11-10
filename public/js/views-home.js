@@ -106,7 +106,7 @@ async function viewSearch() {
   if (SEARCH.town === '') SEARCH.town = getMyTown();
   v.innerHTML = `
     <div class="filterbar">
-      <input class="inp" id="s-q" placeholder="Search town, estate…" value="${esc(SEARCH.q)}">
+      <input class="inp" id="s-q" placeholder="Search town, estate, tag…" value="${esc(SEARCH.q)}">
       <button class="btn btn-outline" id="s-toggle">${ic('gear')}<span class="hide-p">Filters</span></button>
       <button class="btn btn-green" id="s-go">${ic('search')}</button>
     </div>
@@ -118,7 +118,7 @@ async function viewSearch() {
       <h3>Amenities</h3>
       <label class="check"><input type="checkbox" data-a="water" ${SEARCH.amenities.includes('water') ? 'checked' : ''}> Water included</label>
       <label class="check"><input type="checkbox" data-a="wifi" ${SEARCH.amenities.includes('wifi') ? 'checked' : ''}> WiFi included</label>
-      <label class="check"><input type="checkbox" data-a="ensuite" ${SEARCH.amenities.includes('ensuite') ? 'checked' : ''}> Own bathroom (en-suite)</label>
+      <label class="check"><input type="checkbox" data-a="ensuite" ${SEARCH.amenities.includes('ensuite') ? 'checked' : ''}> Bathroom inside (self-contained)</label>
       <label class="check"><input type="checkbox" data-a="kitchen" ${SEARCH.amenities.includes('kitchen') ? 'checked' : ''}> Own kitchen</label>
       <label class="check"><input type="checkbox" data-a="parking" ${SEARCH.amenities.includes('parking') ? 'checked' : ''}> Parking</label>
       <label class="check"><input type="checkbox" data-a="guard" ${SEARCH.amenities.includes('guard') ? 'checked' : ''}> Security guard</label>

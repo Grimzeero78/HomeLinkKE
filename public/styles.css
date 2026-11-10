@@ -491,3 +491,12 @@ html[data-theme="dark"] .badge-vac.open,html[data-theme="dark"] .pill-vac{color:
 .guide-list{margin:8px 0 0;padding-left:20px;display:grid;gap:9px;font-size:14px;color:var(--ink2,#444)}
 .guide-list li{line-height:1.45;padding-left:2px}
 .guide-list li::marker{color:var(--green,#0e5a33);font-weight:700}
+
+/* ---- searchable town picker (create wizard step 1) ---- */
+.town-pick{max-height:200px;overflow-y:auto;margin-top:8px}
+
+/* ---- full-screen map sheet: pinning on a phone without page jumps ----
+   the wizard's 300px box stays inline; "Open big map" flips it to a fixed
+   overlay covering the viewport (body scroll locked while it is open). */
+#pick-map.map-full{position:fixed !important;inset:0 !important;width:100vw !important;height:100dvh !important;z-index:4000;margin:0 !important;border-radius:0 !important}
+.map-done{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:1200;box-shadow:0 8px 28px rgba(0,0,0,.45);white-space:nowrap}

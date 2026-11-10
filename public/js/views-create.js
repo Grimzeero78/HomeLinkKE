@@ -56,17 +56,18 @@ async function viewCreate(id) {
   const STEPS = [
     { t: 'Property basics', html: () => `
       ${txt('title', 'Listing title', 'e.g. Spacious 1 Bedroom — Kilimani')}
+      ${txt('tags', 'Search tags (optional)', 'e.g. near JKUAT, borehole water, corner plot')}
+      <p class="hint-t">Words renters type when searching — your listing shows up when any tag matches. Separate tags with commas.</p>
       ${sel('ptype', 'Property type', TYPES)}
-      <label class="lbl">Town <span style="font-weight:500">(renters browse and search by town)</span></label>
-      <select class="inp" data-k="town">
-        <option value="" ${L.town ? '' : 'selected'} disabled>Choose the town…</option>
-        ${TOWNS.map(t => `<option ${L.town === t.n ? 'selected' : ''}>${esc(t.n)}</option>`).join('')}
-      </select>
+      <label class="lbl">Town / county <span style="font-weight:500">(renters browse and search by town — type to search)</span></label>
+      <input class="inp" id="town-q" placeholder="Type to search… e.g. Nyeri" autocomplete="off" value="${esc(L.town || '')}">
+      <div class="chips town-pick" id="town-list"></div>
+      <p class="hint-t" id="town-hint">${L.town ? `${ic('check')} <b>${esc(L.town)}</b> selected — tap another town to change it.` : 'Start typing and tap your town from the list.'}</p>
       <p class="hint-t">Boosts are also targeted to this town — renters browsing ${esc(L.town || 'your town')} see boosted houses on top.</p>
-      ${txt('units', 'Total units in the compound', 'e.g. 6', 'number')}
-      <p class="hint-t">Renters see exactly how many units are vacant — start with all of them vacant, then update the count anytime in <b>My listings</b> as houses fill.</p>
+      ${txt('units', 'How many vacant units are available?', 'e.g. 3 vacant now', 'number')}
+      <p class="hint-t">This is the number renters see as VACANT on your card. Post the listing first, then update the count anytime in <b>My listings</b> with the −1 / +1 buttons as houses fill.</p>
       ${sel('furnishing', 'Furnishing', FURN)}
-      ${sel('floor', 'Floor', FLOORS)}` },
+      ${sel('floor', 'Floor', FLOORS.map(f => f === 'Ground' ? 'Ground floor' : f + ' floor'), 'Leave it as Ground floor if the house is on the ground.')}` },
     { t: 'Location', html: () => `
       ${txt('area', 'Estate / area (optional)', 'e.g. Kilimani, Section 9, Milimani')}
       ${txt('landmark', 'Nearest landmark (optional)', 'e.g. opposite Naivas, near the stage')}
@@ -81,6 +82,7 @@ async function viewCreate(id) {
         </div>
         <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
           <button class="btn btn-outline btn-sm" id="pick-gps" type="button">${ic('pin')} Use my current location</button>
+          <button class="btn btn-outline btn-sm" id="pick-full" type="button">⤢ Open big map — easier on phone</button>
         </div>
         <div style="display:flex;gap:8px;margin-top:8px">
           <input class="inp" id="pick-lat" placeholder="(optional) lat" value="${L.lat ?? ''}">
@@ -110,8 +112,8 @@ async function viewCreate(id) {
       ${sel('garbage', 'Garbage disposal', GARBAGE)}
       ${sel('backup', 'Backup power', BACKUP)}` },
     { t: 'Inside the unit', html: () => `
-      ${sel('bath', 'Bathrooms', BATHS)}
-      ${yesNo('ensuite', 'Own bathroom (en-suite)?')}
+      ${yesNo('ensuite', 'Own bathroom inside? (self-contained)')}
+      <p class="hint-t">"Self-contained" — the bathroom is inside your unit, not shared with other tenants outside.</p>
       ${yesNo('kitchen', 'Own kitchen inside the unit?')}
       ${yesNo('parking', 'Parking space available?')}
       ${yesNo('balcony', 'Balcony?')}
@@ -137,7 +139,8 @@ async function viewCreate(id) {
       <label class="lbl">Photos (3–8) — first photo is the cover</label>
       <div class="photo-grid" id="w-photos"></div>
       <input type="file" id="w-file" accept="image/*" multiple hidden>
-      <p class="hint-t" style="margin-top:8px">Photos are compressed in your browser before upload. Add clear daylight photos — listings with good photos get 3× more chats.</p>
+      <input type="file" id="w-cam" accept="image/*" capture="environment" multiple hidden>
+      <p class="hint-t" style="margin-top:8px">On your phone, <b>Take photo</b> opens the camera directly. Photos are compressed in your browser before upload. Add clear daylight photos — listings with good photos get 3× more chats.</p>
       <div class="sec-block" style="margin-top:14px"><h3>Review</h3><div id="w-review"></div></div>` },
   ];
 
@@ -218,6 +221,7 @@ async function viewCreate(id) {
       else L.security = L.security.filter(x => x !== val);
     };
 
+    if (step === 0) wireTownPicker();
     if (step === 1) wireLocation();
     if (step === 7) wirePhotos();
 
@@ -243,6 +247,31 @@ async function viewCreate(id) {
     }
     if (s === 7 && L.photos.length < 3) return 'Add at least 3 photos';
     return null;
+  }
+
+  // ----- searchable town/county picker (type-to-filter — scrolling 50+ towns is painful) -----
+  function wireTownPicker() {
+    const qIn = v.querySelector('#town-q'), list = v.querySelector('#town-list'), hint = v.querySelector('#town-hint');
+    if (!qIn || !list) return;
+    const draw = filter => {
+      const f = (filter || '').trim().toLowerCase();
+      let pool = f ? TOWNS.filter(t => t.n.toLowerCase().includes(f))
+        : [...TOWNS.filter(t => t.big), ...TOWNS.filter(t => !t.big)]; // big towns first when opened empty
+      const top = pool.slice(0, 14);
+      list.innerHTML = top.map(t => `<button type="button" class="chip ${L.town === t.n ? 'on' : ''}" data-n="${esc(t.n)}">${esc(t.n)}</button>`).join('')
+        + (!top.length ? '<span class="hint-t">No town by that name — check the spelling.</span>' : '');
+      list.querySelectorAll('[data-n]').forEach(b => b.onclick = () => {
+        L.town = b.dataset.n;
+        qIn.value = L.town;
+        hint.innerHTML = `${ic('check')} <b>${esc(L.town)}</b> selected — tap another town to change it.`;
+        list.style.display = 'none';
+      });
+    };
+    qIn.addEventListener('focus', () => { list.style.display = ''; draw(qIn.value === L.town ? '' : qIn.value); });
+    qIn.addEventListener('input', () => draw(qIn.value));
+    qIn.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const first = list.querySelector('[data-n]'); if (first) first.click(); } });
+    list.style.display = L.town ? 'none' : '';
+    if (!L.town) draw('');
   }
 
   // ----- location picker (Google Maps — same map students see) -----
@@ -313,27 +342,46 @@ async function viewCreate(id) {
       M.map.on('click', e => setPos(e.latlng.lat, e.latlng.lng, false));
       if (L.lat != null) setPos(L.lat, L.lng, false);
       setTimeout(() => M.map.invalidateSize(), 60);
+      // full-screen map sheet — on a phone the 300px box is fiddly; this covers the whole
+      // screen (body scroll locked), so dragging the pin never moves the page underneath
+      const fullBtn = v.querySelector('#pick-full');
+      if (fullBtn) fullBtn.onclick = () => {
+        const full = box.classList.toggle('map-full');
+        document.body.style.overflow = full ? 'hidden' : '';
+        let done = box.querySelector('.map-done');
+        if (full && !done) {
+          done = document.createElement('button');
+          done.type = 'button'; done.className = 'btn btn-green map-done'; done.textContent = '✓ Use this spot';
+          done.onclick = () => fullBtn.onclick();
+          box.appendChild(done);
+        }
+        if (!full && L.lat != null) M.map.setView([L.lat, L.lng], Math.max(M.map.getZoom(), 16));
+        setTimeout(() => M.map.invalidateSize(), 90);
+      };
     }).catch(() => {
       box.innerHTML = '<div class="notice notice-o">Map could not load — check your internet connection and reopen this step.</div>';
     });
   }
 
-  // ----- photos -----
+  // ----- photos (camera on phone / files everywhere) -----
   function wirePhotos() {
     const grid = v.querySelector('#w-photos');
     const fileIn = v.querySelector('#w-file');
+    const camIn = v.querySelector('#w-cam');
     const draw = () => {
+      const addBtns = L.photos.length < 8 ? `
+        <button class="photo-add" id="ph-cam" type="button">${ic('camera')}<span>Take photo</span></button>
+        <button class="photo-add" id="ph-add" type="button">${ic('photo')}<span>Choose photos</span></button>` : '';
       grid.innerHTML = L.photos.map((src, i) => `
         <div class="photo-cell"><img src="${src}"><button class="photo-x" data-i="${i}" type="button">✕</button>
-          ${i === 0 ? '<span class="mini-tag" style="position:absolute;bottom:4px;left:4px">Cover</span>' : ''}</div>`).join('')
-        + (L.photos.length < 8 ? `<button class="photo-add" id="ph-add" type="button">${ic('camera')}<span>Add photo</span></button>` : '');
+          ${i === 0 ? '<span class="mini-tag" style="position:absolute;bottom:4px;left:4px">Cover</span>' : ''}</div>`).join('') + addBtns;
       grid.querySelectorAll('.photo-x').forEach(b => b.onclick = () => { const i = +b.dataset.i; L.photos.splice(i, 1); L.thumbs.splice(i, 1); draw(); });
-      grid.querySelector('#ph-add').onclick = () => fileIn.click();
+      const addB = grid.querySelector('#ph-add'); if (addB) addB.onclick = () => fileIn.click();
+      const camB = grid.querySelector('#ph-cam'); if (camB) camB.onclick = () => camIn.click();
       drawReview();
     };
-    fileIn.onchange = async () => {
-      const files = [...fileIn.files].filter(f => f.type.startsWith('image/'));
-      for (const f of files) {
+    const processFiles = async files => {
+      for (const f of [...files].filter(f => f.type.startsWith('image/'))) {
         if (L.photos.length >= 8) { toast('Maximum 8 photos', true); break; }
         toast('Processing photo…');
         try {
@@ -343,9 +391,10 @@ async function viewCreate(id) {
           L.photos.push(full); L.thumbs.push(th);
         } catch (e) { toast(e.message, true); }
       }
-      fileIn.value = '';
       draw();
     };
+    fileIn.onchange = async () => { const fs = fileIn.files; fileIn.value = ''; await processFiles(fs); };
+    camIn.onchange = async () => { const fs = camIn.files; camIn.value = ''; await processFiles(fs); };
     function drawReview() {
       const rv = v.querySelector('#w-review'); if (!rv) return;
       const rows = [
@@ -353,8 +402,8 @@ async function viewCreate(id) {
         ['Estate', L.area ? L.area + (L.landmark ? ' — ' + L.landmark : '') : ''],
         ['Rent', L.rent ? kes(L.rent) + ' / ' + (L.period || '').toLowerCase() : ''],
         ['Deposit', L.deposit ? kes(L.deposit) : 'None'],
-        ['Water', L.water], ['Electricity', L.elec], ['WiFi', L.wifi], ['Bathrooms', L.bath],
-        ['Own bathroom', L.ensuite === 'Yes' ? 'Yes' : ''], ['Own kitchen', L.kitchen === 'Yes' ? 'Yes' : ''],
+        ['Water', L.water], ['Electricity', L.elec], ['WiFi', L.wifi],
+        ['Bathroom inside', L.ensuite === 'Yes' ? 'Yes (self-contained)' : 'Shared / outside'], ['Own kitchen', L.kitchen === 'Yes' ? 'Yes' : ''],
         ['Parking', L.parking === 'Yes' ? 'Yes' : ''],
         ['Preferred tenants', L.tenantPref], ['Pets', L.pets], ['Available', L.availableFrom || 'Now'], ['Photos', L.photos.length + ' added'],
       ];

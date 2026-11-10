@@ -145,7 +145,7 @@ function amenityTags(l) {
   if (l.water === 'Included in rent') t.push('Water incl.');
   if (l.wifi === 'Included in rent') t.push('WiFi');
   if (l.elec === 'Included in rent') t.push('Power incl.');
-  if (l.ensuite === 'Yes' || l.bath === 'Ensuite (own)') t.push('En-suite');
+  if (l.ensuite === 'Yes' || l.bath === 'Ensuite (own)') t.push('Bathroom inside');
   if (l.kitchen === 'Yes' || l.kitchen === 'Own') t.push('Own kitchen');
   if (l.parking === 'Yes') t.push('Parking');
   if (l.backup && l.backup !== 'None') t.push(l.backup + ' backup');

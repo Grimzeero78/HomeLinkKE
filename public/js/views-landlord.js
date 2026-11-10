@@ -96,10 +96,12 @@ async function viewBoost(id) {
       <div class="steps3" style="margin-top:10px">
         <div class="stepcard"><div class="step-n">1</div><div><h3>Open M-Pesa</h3><p>Go to <b>Send Money</b> (Pochi / Send to mobile).</p></div></div>
         <div class="stepcard"><div class="step-n">2</div><div><h3>Send KES ${BOOST.amountKes}</h3><p>To number <b>${esc(paybill)}</b> — <b>${esc(payname)}</b>.</p></div></div>
-        <div class="stepcard"><div class="step-n">3</div><div><h3>Confirm below</h3><p>Enter the M-Pesa confirmation code and tap "I have sent the money". The admin will activate your boost.</p></div></div>
+        <div class="stepcard"><div class="step-n">3</div><div><h3>Confirm below</h3><p>Enter the M-Pesa confirmation code <b>or the name you sent from</b>, then tap "I have sent the money". The admin will activate your boost.</p></div></div>
       </div>
-      <label class="lbl">M-Pesa confirmation code <span style="font-weight:500">(optional but speeds up confirmation)</span></label>
+      <label class="lbl">M-Pesa confirmation code <span style="font-weight:500">(fastest — copy it from the SMS)</span></label>
       <input class="inp" id="bs-code" placeholder="e.g. SLK7AB12C9" style="text-transform:uppercase">
+      <label class="lbl">Name the money was sent from <span style="font-weight:500">(if you did not note the code)</span></label>
+      <input class="inp" id="bs-name" placeholder="e.g. Grace Wanjiru — the name on M-Pesa">
       <button class="btn btn-primary btn-block" id="bs-go" style="margin-top:16px">${ic('bolt')} I have sent the money</button>
       <p class="hint-t" style="margin-top:10px">Payments go directly to <b>${esc(payname)}</b>, not to HuntInKE. Rent and deposits are NEVER paid through this platform.</p>
     </div>` : ''}
@@ -108,7 +110,14 @@ async function viewBoost(id) {
   const go = v.querySelector('#bs-go');
   if (go) go.onclick = async () => {
     go.disabled = true;
-    const res = await api('/listings/' + id + '/boost', { body: { mpesaCode: (v.querySelector('#bs-code').value || '').trim().toUpperCase() } });
+    const code = (v.querySelector('#bs-code').value || '').trim().toUpperCase();
+    const sname = (v.querySelector('#bs-name').value || '').trim();
+    if (!code && !sname) {
+      toast('Add the M-Pesa code or the name you sent from — the admin needs one to find your payment', true);
+      go.disabled = false;
+      return;
+    }
+    const res = await api('/listings/' + id + '/boost', { body: { mpesaCode: code, senderName: sname } });
     if (res.ok) { toast('Sent! The admin will confirm your payment shortly.'); viewBoost(id); }
     else { toast(res.error, true); go.disabled = false; }
   };
