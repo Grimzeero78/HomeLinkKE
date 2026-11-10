@@ -105,7 +105,11 @@ async function viewHome() {
 async function viewSearch() {
   const v = document.getElementById('view');
   const gen = routeGen;
-  if (SEARCH.town === '') SEARCH.town = getMyTown();
+  // A typed search must NEVER inherit the saved town silently — that ANDed an invisible
+  // `l.town = '<saved town>'` filter onto the query, so a renter whose phone had saved
+  // "Nairobi" saw ZERO results when they searched "chuka". The saved town only preselects
+  // the filter when arriving with an empty query (plain Search-tab tap).
+  if (SEARCH.town === '' && !SEARCH.q) SEARCH.town = getMyTown();
   v.innerHTML = `
     <div class="filterbar">
       <input class="inp" id="s-q" placeholder="Search town, estate, tag…" value="${esc(SEARCH.q)}">
@@ -148,8 +152,19 @@ async function viewSearch() {
     });
   };
   v.querySelector('#s-toggle').onclick = () => v.querySelector('#s-filters').classList.toggle('hide');
-  v.querySelector('#s-go').onclick = () => { SEARCH.q = v.querySelector('#s-q').value; load(); };
-  v.querySelector('#s-q').addEventListener('keydown', e => { if (e.key === 'Enter') { SEARCH.q = e.target.value; load(); } });
+  const townChipSync = () => [...v.querySelector('#f-town').children].forEach(c => c.classList.toggle('on', c.dataset.v === SEARCH.town));
+  // Typing a town's exact name IS a location search — "nairobi" or "chuka" switches the
+  // town filter to that town (chip lights up, saved town updates) and shows ALL its houses,
+  // instead of ANDing the text with whatever town filter was active.
+  const goSearch = () => {
+    const typed = v.querySelector('#s-q').value.trim();
+    const t = TOWNS.find(x => x.n.toLowerCase() === typed.toLowerCase());
+    if (t) { SEARCH.town = t.n; setMyTown(t.n); SEARCH.q = ''; townChipSync(); }
+    else SEARCH.q = typed;
+    load();
+  };
+  v.querySelector('#s-go').onclick = goSearch;
+  v.querySelector('#s-q').addEventListener('keydown', e => { if (e.key === 'Enter') goSearch(); });
   ['#f-min', '#f-max'].forEach(s => v.querySelector(s).addEventListener('change', () => {
     SEARCH.min = v.querySelector('#f-min').value; SEARCH.max = v.querySelector('#f-max').value; load();
   }));
