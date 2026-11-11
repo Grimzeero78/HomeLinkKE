@@ -10,9 +10,20 @@ import 'screens/shell.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Notifs.init();
   final st = AppState();
+  // UI starts immediately — never wait for plugins before the first frame.
+  // (Waiting here froze the splash forever on emulators/old Android when the
+  // notifications plugin failed.)
   runApp(HuntInApp(state: st));
+  _initNotifs(); // in the background; notifications are optional, not critical
+}
+
+Future<void> _initNotifs() async {
+  try {
+    await Notifs.init();
+  } catch (_) {
+    // old Android/emulator without notification support — app still works
+  }
 }
 
 class HuntInApp extends StatefulWidget {

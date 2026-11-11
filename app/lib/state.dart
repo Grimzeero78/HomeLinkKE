@@ -34,18 +34,27 @@ class AppState extends ChangeNotifier {
   SharedPreferences get prefs => _prefs!;
 
   Future<void> boot() async {
-    _prefs = await SharedPreferences.getInstance();
-    token = _prefs!.getString('hl_token');
-    myTown = _prefs!.getString('hl_town') ?? '';
-    myLat = _prefs!.getDouble('hl_lat');
-    myLng = _prefs!.getDouble('hl_lng');
-    switch (_prefs!.getString('hl_theme')) {
-      case 'light': themeMode = ThemeMode.light;
-      case 'dark': themeMode = ThemeMode.dark;
-      default: themeMode = ThemeMode.system;
+    // LOCAL loads first, then the UI shows immediately — network waits never
+    // block the splash (a slow emulator sat up to 40s frozen before this fix).
+    try {
+      _prefs = await SharedPreferences.getInstance();
+      token = _prefs!.getString('hl_token');
+      myTown = _prefs!.getString('hl_town') ?? '';
+      myLat = _prefs!.getDouble('hl_lat');
+      myLng = _prefs!.getDouble('hl_lng');
+      switch (_prefs!.getString('hl_theme')) {
+        case 'light': themeMode = ThemeMode.light;
+        case 'dark': themeMode = ThemeMode.dark;
+        default: themeMode = ThemeMode.system;
+      }
+    } catch (_) {
+      // prefs unavailable (rare, e.g. broken emulator) — start with defaults
     }
     api = Api(token);
-    await _loadSettings();
+    ready = true;
+    notifyListeners();
+    // Everything below is network — runs in the background, UI is already up.
+    _loadSettings();
     if (token != null && token!.isNotEmpty) {
       try {
         final r = await api.me();
@@ -54,14 +63,13 @@ class AppState extends ChangeNotifier {
       } on ApiException catch (e) {
         if (e.status == 401) {
           token = null;
-          await _prefs!.remove('hl_token');
+          try { await _prefs!.remove('hl_token'); } catch (_) {}
         }
       } catch (_) {
-        // offline first launch — keep the token and retry next boot
+        // offline — keep the token and retry next boot
       }
+      notifyListeners(); // session restored (or cleared) — refresh the UI
     }
-    ready = true;
-    notifyListeners();
   }
 
   Future<void> _loadSettings() async {

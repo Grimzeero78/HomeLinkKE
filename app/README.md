@@ -30,21 +30,22 @@ you get with one pull.
 
 ```
 flutter pub get
-flutter build apk --split-per-abi
+flutter build apk --release
 ```
 
 The Android project files are included in this repo. **First build takes
 5–15 minutes** (downloads Android tools) — needs internet, don't close the terminal.
 
-**4. Your APK:**
+**4. Your APK (the ONE apk — works on ALL phones AND BlueStacks):**
 
 ```
-build\app\outputs\flutter-apk\app-arm64-v8a-release.apk
+build\app\outputs\flutter-apk\app-release.apk
 ```
 
-Copy the `app-arm64-v8a-release.apk` to a modern Android phone → tap it →
-allow "install unknown apps" → done. Separate APKs for other processor types
-are in the same folder.
+- Real phone: copy it to the phone → tap it → allow "install unknown apps" → done.
+- BlueStacks: **drag the file into the BlueStacks window** → it installs.
+  (Do NOT use the smaller `-split-per-abi` APKs — BlueStacks often cannot run
+  them. The plain `app-release.apk` contains every processor type.)
 
 ---
 
