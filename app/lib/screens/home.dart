@@ -107,8 +107,16 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         titleSpacing: 14,
         title: Row(children: [
-          ClipRRect(borderRadius: BorderRadius.circular(7),
-              child: Image.asset('assets/icon/icon-1024.png', width: 25, height: 25, errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+          // web .brand-logo-sm: 25px, radius 7, soft green glow — clean icon-192
+          Container(
+            width: 25, height: 25,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(7),
+              boxShadow: [BoxShadow(color: C.pine.withValues(alpha: .45), blurRadius: 7, offset: const Offset(0, 2), spreadRadius: -2)],
+            ),
+            child: ClipRRect(borderRadius: BorderRadius.circular(7),
+                child: Image.asset('assets/icon/icon-192.png', width: 25, height: 25, errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+          ),
           const SizedBox(width: 7),
           const BrandWord(size: 16.5),
         ]),
@@ -200,11 +208,11 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: .06)))),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Find a house anywhere in Kenya',
-              style: TextStyle(fontFamily: 'serif', fontSize: 24, fontWeight: FontWeight.w800,
-                  color: Colors.white, height: 1.15)),
+              style: TextStyle(fontFamily: kDisp, fontSize: 26, fontWeight: FontWeight.w800,
+                  color: Colors.white, height: 1.15, letterSpacing: -.25)),
           const SizedBox(height: 8),
           Text('Bedsitters, apartments and family houses in every town — chat with the landlord directly, view first, pay later.',
-              style: TextStyle(fontSize: 13.5, color: const Color(0xFFD8E8DD), height: 1.5)),
+              style: TextStyle(fontSize: 14, color: const Color(0xFFD8E8DD), height: 1.5)),
           const SizedBox(height: 15),
           Row(children: [
             Expanded(
@@ -230,15 +238,23 @@ class _HomeScreenState extends State<HomeScreen> {
           Wrap(
             spacing: 7, runSpacing: 7,
             children: [
+              // pixel port of web .hero-chips .chip / .chip.on
               for (final tw in TOWNS.where((x) => x.big))
-                ActionChip(
-                  label: Text(tw.n, style: TextStyle(
-                      fontSize: 13, fontWeight: tw.n == myTown ? FontWeight.w800 : FontWeight.w700,
-                      color: tw.n == myTown ? C.pineDeep : Colors.white)),
-                  backgroundColor: tw.n == myTown ? Colors.white : Colors.white.withValues(alpha: .16),
-                  side: BorderSide(color: Colors.white.withValues(alpha: tw.n == myTown ? .95 : .45), width: 1.2),
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                  onPressed: () => _openSearch(town: tw.n),
+                GestureDetector(
+                  onTap: () => _openSearch(town: tw.n),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: tw.n == myTown ? Colors.white : Colors.white.withValues(alpha: .12),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                          color: tw.n == myTown ? Colors.white : Colors.white.withValues(alpha: .22),
+                          width: 1.5),
+                    ),
+                    child: Text(tw.n, style: TextStyle(
+                        fontSize: 12.5, fontWeight: FontWeight.w600,
+                        color: tw.n == myTown ? C.pineDeep : const Color(0xFFEAF4EC))),
+                  ),
                 ),
             ],
           ),

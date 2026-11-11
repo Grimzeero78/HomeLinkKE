@@ -101,7 +101,7 @@ class WelcomeScreen extends StatelessWidget {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Row(children: [
                 ClipRRect(borderRadius: BorderRadius.circular(12),
-                    child: Image.asset('assets/icon/icon-1024.png', width: 44, height: 44,
+                    child: Image.asset('assets/icon/icon-192.png', width: 44, height: 44,
                         errorBuilder: (_, __, ___) => const SizedBox(width: 44, height: 44))),
                 const SizedBox(width: 11),
                 Expanded(child: Text('Welcome to HuntInKE$hi!',

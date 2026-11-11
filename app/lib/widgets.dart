@@ -65,16 +65,16 @@ class DataImg extends StatelessWidget {
   }
 }
 
-// ---------- brand word mark ----------
+// ---------- brand word mark (web .brand-word: display font, 600, IN 800 ember) ----------
 class BrandWord extends StatelessWidget {
   final double size;
   const BrandWord({super.key, this.size = 17});
   @override
   Widget build(BuildContext context) {
     return Text.rich(TextSpan(children: [
-      TextSpan(text: 'HUNT', style: TextStyle(fontWeight: FontWeight.w700, fontSize: size)),
-      TextSpan(text: 'IN', style: TextStyle(fontWeight: FontWeight.w900, fontSize: size, color: C.ember)),
-      TextSpan(text: 'KE', style: TextStyle(fontWeight: FontWeight.w700, fontSize: size)),
+      TextSpan(text: 'HUNT', style: TextStyle(fontFamily: kDisp, fontWeight: FontWeight.w600, fontSize: size, letterSpacing: .02)),
+      TextSpan(text: 'IN', style: TextStyle(fontFamily: kDisp, fontWeight: FontWeight.w800, fontSize: size, color: C.ember, letterSpacing: .02)),
+      TextSpan(text: 'KE', style: TextStyle(fontFamily: kDisp, fontWeight: FontWeight.w600, fontSize: size, letterSpacing: .02)),
     ]));
   }
 }
@@ -150,7 +150,7 @@ class ListingCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(12, 9, 12, 12),
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text.rich(TextSpan(children: [
-                TextSpan(text: kes(l.rent), style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16.5, color: t.pineInk, letterSpacing: -.3)),
+                TextSpan(text: kes(l.rent), style: TextStyle(fontFamily: kDisp, fontWeight: FontWeight.w800, fontSize: 16.5, color: t.pineInk, letterSpacing: -.3)),
                 TextSpan(text: '/${perShort(l.period)}', style: TextStyle(fontSize: 11.5, color: t.ink3, fontWeight: FontWeight.w600)),
               ])),
               const SizedBox(height: 2),
@@ -284,7 +284,8 @@ class SectionHead extends StatelessWidget {
           const SizedBox(width: 7),
         ],
         Expanded(child: Text(title, style: TextStyle(
-            fontWeight: FontWeight.w800, fontSize: 18.5, color: t.ink, letterSpacing: -.3))),
+            fontFamily: kDisp,
+            fontWeight: FontWeight.w800, fontSize: 19, color: t.ink, letterSpacing: -.3))),
         if (action != null)
           GestureDetector(
             onTap: onAction,

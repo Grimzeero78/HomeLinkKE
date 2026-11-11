@@ -63,7 +63,8 @@ class _HuntInAppState extends State<HuntInApp> {
   }
 }
 
-// splash — same feel as the website's (#splash): pine background, logo + wordmark
+// splash — pixel port of the website's #splash (.splash-card): pine background,
+// clean icon-192 with the same soft shadow, display-font wordmark, tagline.
 class _Splash extends StatelessWidget {
   const _Splash();
   @override
@@ -73,18 +74,25 @@ class _Splash extends StatelessWidget {
       body: Center(
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Container(
-            width: 88, height: 88,
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-            padding: const EdgeInsets.all(6),
-            child: Image.asset('assets/icon/icon-1024.png',
-                errorBuilder: (_, __, ___) => const Icon(Icons.home, color: C.pine, size: 52)),
+            width: 66, height: 66,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: const [
+                BoxShadow(color: Color(0x52000000), blurRadius: 32, offset: Offset(0, 12)),
+                BoxShadow(color: Color(0x24FFFFFF), blurRadius: 0, spreadRadius: 1),
+              ],
+            ),
+            child: ClipRRect(borderRadius: BorderRadius.circular(18),
+                child: Image.asset('assets/icon/icon-192.png',
+                    errorBuilder: (_, __, ___) => const Icon(Icons.home, color: Colors.white, size: 52))),
           ),
-          const SizedBox(height: 18),
-          const Text.rich(
+          const SizedBox(height: 12),
+          // web .splash-word: display font 600 22px white, "IN" 800 #ffd9b8
+          Text.rich(
             TextSpan(children: [
-              TextSpan(text: 'HUNT', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1)),
-              TextSpan(text: 'IN', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: C.ember, letterSpacing: 1)),
-              TextSpan(text: 'KE', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: Colors.white, letterSpacing: 1)),
+              TextSpan(text: 'HUNT', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
+              TextSpan(text: 'IN', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFFFFD9B8), letterSpacing: .45)),
+              TextSpan(text: 'KE', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
             ]),
           ),
           const SizedBox(height: 10),

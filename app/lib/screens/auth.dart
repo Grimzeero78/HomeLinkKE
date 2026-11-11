@@ -130,9 +130,17 @@ class _AuthScreenState extends State<AuthScreen> {
               decoration: BoxDecoration(color: t.card, borderRadius: BorderRadius.circular(20), border: Border.all(color: t.line)),
               child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Row(children: [
-                  ClipRRect(borderRadius: BorderRadius.circular(13),
-                      child: Image.asset('assets/icon/icon-1024.png', width: 52, height: 52,
-                          errorBuilder: (_, __, ___) => const SizedBox(width: 52, height: 52))),
+                  // clean web icon + the brand shadow from web .brand-logo
+                  Container(
+                    width: 44, height: 44,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [BoxShadow(color: C.pine.withValues(alpha: .45), blurRadius: 12, offset: const Offset(0, 4), spreadRadius: -4)],
+                    ),
+                    child: ClipRRect(borderRadius: BorderRadius.circular(12),
+                        child: Image.asset('assets/icon/icon-192.png', width: 44, height: 44,
+                            errorBuilder: (_, __, ___) => const SizedBox(width: 44, height: 44))),
+                  ),
                   const SizedBox(width: 12),
                   Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     const BrandWord(size: 19),
