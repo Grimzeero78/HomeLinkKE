@@ -27,7 +27,6 @@ class _HomeScreenState extends State<HomeScreen> {
   String _error = '';
   List<Listing> _items = [];
   final Map<int, double> _dist = {};
-  bool _askedGps = false;
   final _heroQ = TextEditingController();
 
   @override
@@ -81,7 +80,6 @@ class _HomeScreenState extends State<HomeScreen> {
         distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
       await st.setMyTown(near.n); // GPS says which town you are in
     }
-    _askedGps = true;
     _load();
   }
 
@@ -295,50 +293,39 @@ class _HomeScreenState extends State<HomeScreen> {
   // ---- houses near you ----
   Widget _nearSection(BuildContext context, String myTown, bool hasPos,
       List<Listing> nearItems) {
-    if (!hasPos && myTown.isEmpty && !_askedGps) {
-      final t = T(Theme.of(context).brightness);
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-        decoration: BoxDecoration(
-            color: t.card,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: t.line)),
-        child: Column(children: [
-          Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.location_on_outlined, size: 18, color: t.pine),
-            const SizedBox(width: 6),
-            Text('Houses around you',
-                style: TextStyle(
-                    fontWeight: FontWeight.w800, fontSize: 15.5, color: t.ink)),
-          ]),
-          const SizedBox(height: 6),
-          Text(
-              'Allow location and HuntInKE shows vacant houses nearest to you first — in any town.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12.5, color: t.ink3, height: 1.5)),
-          const SizedBox(height: 12),
-          FilledButton(
-            style: FilledButton.styleFrom(
-                minimumSize: const Size(0, 44),
-                padding: const EdgeInsets.symmetric(horizontal: 16)),
-            onPressed: _useMyLocation,
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.location_on_outlined, size: 17),
-              SizedBox(width: 6),
-              Text('Use my location'),
-            ]),
-          ),
-          const SizedBox(height: 9),
-          Text('Prefer not to? Just pick your town on the green card above.',
-              style: TextStyle(fontSize: 12, color: t.ink3)),
-        ]),
-      );
-    }
+    final t = T(Theme.of(context).brightness);
     return Column(children: [
-      SectionHead(hasPos ? 'Houses near you' : 'Houses in $myTown',
+      SectionHead(
+          hasPos
+              ? 'Houses near you'
+              : myTown.isEmpty
+                  ? 'Houses around you'
+                  : 'Houses in $myTown',
           icon: Icons.location_on_outlined,
           action: 'Open map →',
           onAction: () => _openTab(2)),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: FilledButton(
+          style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 42),
+              padding: const EdgeInsets.symmetric(horizontal: 14)),
+          onPressed: _useMyLocation,
+          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(Icons.location_on_outlined, size: 17),
+            SizedBox(width: 6),
+            Text('Use my location'),
+          ]),
+        ),
+      ),
+      if (!hasPos && myTown.isEmpty)
+        Padding(
+          padding: const EdgeInsets.only(top: 6, bottom: 4),
+          child: Text(
+              'Allow location to find vacant houses nearest to you, in any town.',
+              style: TextStyle(fontSize: 12.5, color: t.ink3, height: 1.5)),
+        ),
+      const SizedBox(height: 8),
       if (_loading)
         const _SkelGrid()
       else if (nearItems.isEmpty)

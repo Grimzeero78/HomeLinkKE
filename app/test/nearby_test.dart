@@ -42,6 +42,7 @@ void main() {
     await tester.pumpAndSettle(const Duration(milliseconds: 300));
 
     expect(find.text('Houses near you'), findsOneWidget);
+    expect(find.text('Use my location'), findsOneWidget);
     expect(find.text('Cosy hostel near campus'), findsOneWidget,
         reason: 'a hostel 200 m away must never read as "no hostel around"');
   });
@@ -59,9 +60,11 @@ void main() {
     // of showing a wrong "near you" list
     expect(find.text('Houses in Nairobi'), findsOneWidget);
     expect(find.text('Houses near you'), findsNothing);
+    expect(find.text('Use my location'), findsOneWidget,
+        reason: 'the location action stays available while browsing by town');
   });
 
-  testWidgets('stale position + no town: the honest "Use my location" card returns',
+  testWidgets('stale position + no town: location action stays available',
       (tester) async {
     final twoHoursAgo = DateTime.now().millisecondsSinceEpoch - 7200000;
     final st = await _stWithPos(posTs: twoHoursAgo, town: '');

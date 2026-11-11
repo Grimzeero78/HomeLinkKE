@@ -63,10 +63,7 @@ class _ShellState extends State<Shell> {
     if (i == 3) context.read<AppState>().resetUnreadBadge();
   }
 
-  // ---- theme switch (web toggleTheme(): light -> dark -> system, toast after) ----
-  // The user could not tell what the gear icon was — so the topbar button is now
-  // ONE TAP = SWITCH between light and dark (sun/moon by what you SEE), and the
-  // full Light / Dark / System choice lives in Profile > Settings > Appearance.
+  // One tap switches light/dark; long-press follows the device setting.
   Future<void> _toggleTheme() async {
     final st = context.read<AppState>();
     final resolvedDark = switch (st.themeMode) {
@@ -97,31 +94,35 @@ class _ShellState extends State<Shell> {
         resolvedDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined;
     return AppBar(
       titleSpacing: 14,
-      title: Row(children: [
-        // web .brand-logo-sm: 25px, radius 7, soft green glow
-        Container(
-          width: 25,
-          height: 25,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(7),
-            boxShadow: [
-              BoxShadow(
-                  color: C.pine.withValues(alpha: .45),
-                  blurRadius: 7,
-                  offset: const Offset(0, 2),
-                  spreadRadius: -2)
-            ],
-          ),
-          child: ClipRRect(
+      title: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: () => _go(0),
+        child: Row(children: [
+          // web .brand-logo-sm: 25px, radius 7, soft green glow
+          Container(
+            width: 25,
+            height: 25,
+            decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(7),
-              child: Image.asset('assets/icon/icon-192.png',
-                  width: 25,
-                  height: 25,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink())),
-        ),
-        const SizedBox(width: 7),
-        const BrandWord(size: 16.5),
-      ]),
+              boxShadow: [
+                BoxShadow(
+                    color: C.pine.withValues(alpha: .45),
+                    blurRadius: 7,
+                    offset: const Offset(0, 2),
+                    spreadRadius: -2)
+              ],
+            ),
+            child: ClipRRect(
+                borderRadius: BorderRadius.circular(7),
+                child: Image.asset('assets/icon/icon-192.png',
+                    width: 25,
+                    height: 25,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+          ),
+          const SizedBox(width: 7),
+          const BrandWord(size: 16.5),
+        ]),
+      ),
       actions: [
         // web .theme-btn: 36x36, radius 11, 1.5px border — on EVERY page
         Padding(

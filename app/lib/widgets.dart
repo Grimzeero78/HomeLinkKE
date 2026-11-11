@@ -116,13 +116,29 @@ class ListingCard extends StatelessWidget {
     final loc = [l.town, if (l.area.isNotEmpty) l.area, if (l.landmark.isNotEmpty) l.landmark].join(' · ');
     final tags = amenityTags(l.raw);
     final dist = distanceM != null ? '${fmtDist(distanceM!)} away' : '';
-    return Material(
-      color: t.card,
-      borderRadius: BorderRadius.circular(16),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onOpen,
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+    return Container(
+      decoration: BoxDecoration(
+        color: t.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: t.line),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: .06),
+              blurRadius: 2,
+              offset: const Offset(0, 1)),
+          BoxShadow(
+              color: Colors.black.withValues(alpha: .12),
+              blurRadius: 24,
+              offset: const Offset(0, 10)),
+        ],
+      ),
+      child: Material(
+        color: t.card,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onOpen,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Stack(children: [
             AspectRatio(
               aspectRatio: 4 / 3,
@@ -213,7 +229,8 @@ class ListingCard extends StatelessWidget {
               ]),
             ]),
           ),
-        ]),
+          ]),
+        ),
       ),
     );
   }
