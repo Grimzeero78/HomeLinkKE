@@ -19,6 +19,7 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   bool _loading = true;
   String _error = '';
   List<dynamic> _verifs = [], _boosts = [], _reports = [], _listings = [], _users = [];
+  Map<String, dynamic> _stats = {};
 
   @override
   void initState() {
@@ -37,6 +38,8 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     final st = context.read<AppState>();
     setState(() { _loading = true; _error = ''; });
     try {
+      final s = await _safeMap(st.api.adminStats);
+      _stats = (s['stats'] ?? <String, dynamic>{}) as Map<String, dynamic>;
       _verifs = await _safe(() => st.api.adminVerifications());
       _boosts = await _safe(() => st.api.adminBoosts());
       _reports = await _safe(() => st.api.adminReports());
@@ -50,6 +53,10 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   Future<List<dynamic>> _safe(Future<List<dynamic>> Function() f) async {
     try { return await f(); } catch (_) { return []; }
+  }
+
+  Future<Map<String, dynamic>> _safeMap(Future<Map<String, dynamic>> Function() f) async {
+    try { return await f(); } catch (_) { return <String, dynamic>{}; }
   }
 
   Future<void> _act(Future<void> Function() f, String okMsg) async {
@@ -106,12 +113,33 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
 
   T get t0 => T(Theme.of(context).brightness);
 
+  // ---------- platform stats (top of the first tab) ----------
+  Widget _statsCard(BuildContext context) {
+    final t = t0;
+    String v(String k) => ((_stats[k] as num?)?.toInt() ?? 0).toString();
+    Widget cell(String label, String value) => Expanded(child: Column(children: [
+      Text(value, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: t.ink)),
+      const SizedBox(height: 2),
+      Text(label, style: TextStyle(fontSize: 10.5, color: t.ink3), textAlign: TextAlign.center),
+    ]));
+    return _card(context, Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      Text('HuntInKE today', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: t.ink2)),
+      const SizedBox(height: 10),
+      Row(children: [cell('users', v('users')), cell('landlords', v('landlords')), cell('listings', v('listings')), cell('vacant now', v('available'))]),
+      const SizedBox(height: 8),
+      Row(children: [cell('total views', v('views')), cell('verify pending', v('verifications')), cell('boost pending', v('boosts')), cell('open reports', v('reports'))]),
+    ]));
+  }
+
   // ---------- verifications ----------
   Widget _verifTab(BuildContext context) {
-    if (_verifs.isEmpty) return _emptyTab(context, 'No verifications waiting', 'Landlords who submit their ID and ownership proof appear here.');
+    if (_verifs.isEmpty && _stats.isEmpty) return _emptyTab(context, 'No verifications waiting', 'Landlords who submit their ID and ownership proof appear here.');
     return ListView(
       padding: const EdgeInsets.all(14),
       children: [
+        if (_stats.isNotEmpty) _statsCard(context),
+        if (_verifs.isEmpty)
+          _card(context, Text('No verifications waiting — landlords who submit their ID and ownership proof appear here.', style: TextStyle(fontSize: 12.5, color: t0.ink2))),
         for (final v in _verifs)
           _card(context, Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Row(children: [
