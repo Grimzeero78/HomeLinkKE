@@ -50,6 +50,16 @@ class _MapScreenState extends State<MapScreen> {
   void initState() {
     super.initState();
     _load();
+    _pickTileSource();
+  }
+
+  // Probe the Google tile source ONCE with a 4 s cap. A tile that hangs never
+  // reaches errorTileCallback, which is why the map could sit blank forever on
+  // networks where mt*.google.com is blocked/slow. Probe fails => start on CARTO.
+  Future<void> _pickTileSource() async {
+    final ok = await tileSourceWorks(_tileGoogle);
+    if (!mounted || _carto) return;
+    if (!ok) setState(() => _carto = true);
   }
 
   @override

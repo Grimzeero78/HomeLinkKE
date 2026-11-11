@@ -92,19 +92,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (st.user == null) {
       return Scaffold(
         backgroundColor: t.bg,
-        body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          Icon(Icons.person_outline, size: 46, color: t.ink3),
-          const SizedBox(height: 10),
-          Text('You are not signed in', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16.5, color: t.ink)),
-          const SizedBox(height: 6),
-          Text('Sign in to save houses, chat with landlords\nand post your own listings.',
-              textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: t.ink2, height: 1.5)),
-          const SizedBox(height: 16),
-          FilledButton(
-            style: FilledButton.styleFrom(minimumSize: const Size(0, 46), padding: const EdgeInsets.symmetric(horizontal: 22)),
-            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen())),
-            child: const Text('Sign in or create account'),
-          ),
+        body: Center(child: ListView(shrinkWrap: true, children: [
+          Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+            Icon(Icons.person_outline, size: 46, color: t.ink3),
+            const SizedBox(height: 10),
+            Text('You are not signed in', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16.5, color: t.ink)),
+            const SizedBox(height: 6),
+            Text('Sign in to save houses, chat with landlords\nand post your own listings.',
+                textAlign: TextAlign.center, style: TextStyle(fontSize: 13, color: t.ink2, height: 1.5)),
+            const SizedBox(height: 16),
+            FilledButton(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 46), padding: const EdgeInsets.symmetric(horizontal: 22)),
+              onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen())),
+              child: const Text('Sign in or create account'),
+            ),
+            // theme is a DEVICE preference on the website too (localStorage) —
+            // guests must be able to pick light/dark here as well
+            const SizedBox(height: 34),
+            Text('SETTINGS', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: t.ink3, letterSpacing: .6)),
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: _appearanceCard(context, st, t),
+            ),
+          ]),
         ])),
       );
     }
@@ -150,9 +161,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Text('SETTINGS', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w800, color: t.ink3, letterSpacing: .6)),
           const SizedBox(height: 8),
           ProwBox(children: [
+            // APPEARANCE — the three choices laid out plainly (the topbar button
+            // only flips light/dark; "system" lives here so nobody has to guess)
             Prow(Icons.dark_mode_outlined, 'Theme: ${_themeName(st.themeMode)}',
-                sub: "Light, dark, or follow this device's setting",
+                sub: 'Light · Dark · Follow device — pick below',
                 onTap: _cycleTheme),
+          ]),
+          const SizedBox(height: 8),
+          _appearanceCard(context, st, t),
+          const SizedBox(height: 8),
+          ProwBox(children: [
             Prow(Icons.logout, 'Sign out', sub: 'End this session on this device', danger: true, onTap: _signOut),
           ]),
           const SizedBox(height: 26),
@@ -168,6 +186,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ThemeMode.dark => 'Dark',
     _ => 'System',
   };
+
+  // Light / Dark / Follow-device — one card, three big taps, green tick on the
+  // active one. Same as the website's theme picker, nothing to guess.
+  Widget _appearanceCard(BuildContext context, AppState st, T t) {
+    Widget opt(String label, IconData icon, ThemeMode m) {
+      final on = st.themeMode == m;
+      return Expanded(child: GestureDetector(
+        onTap: () async {
+          await st.setThemeMode(m);
+          if (context.mounted) snack(context, 'Theme: ${_themeName(m)}');
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: on ? t.mist : t.card2,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: on ? t.pine : t.line, width: on ? 1.8 : 1.3),
+          ),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 21, color: on ? t.pine : t.ink3),
+            const SizedBox(height: 5),
+            Text(label, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: on ? t.pineInk : t.ink2)),
+            const SizedBox(height: 3),
+            Icon(on ? Icons.check_circle : Icons.circle_outlined, size: 13, color: on ? t.pine : t.ink3),
+          ]),
+        ),
+      ));
+    }
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: t.card, borderRadius: BorderRadius.circular(16), border: Border.all(color: t.line)),
+      child: Row(children: [
+        opt('Light', Icons.light_mode_outlined, ThemeMode.light),
+        const SizedBox(width: 8),
+        opt('Dark', Icons.dark_mode_outlined, ThemeMode.dark),
+        const SizedBox(width: 8),
+        opt('Follow device', Icons.brightness_auto_outlined, ThemeMode.system),
+      ]),
+    );
+  }
 
   Future<void> _cycleTheme() async {
     final st = context.read<AppState>();

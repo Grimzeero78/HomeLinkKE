@@ -53,29 +53,36 @@ class _ShellState extends State<Shell> {
     if (i == 3) context.read<AppState>().resetUnreadBadge();
   }
 
-  // ---- theme cycle (web toggleTheme(): light → dark → system, toast after) ----
-  Future<void> _cycleTheme() async {
+  // ---- theme switch (web toggleTheme(): light -> dark -> system, toast after) ----
+  // The user could not tell what the gear icon was — so the topbar button is now
+  // ONE TAP = SWITCH between light and dark (sun/moon by what you SEE), and the
+  // full Light / Dark / System choice lives in Profile > Settings > Appearance.
+  Future<void> _toggleTheme() async {
     final st = context.read<AppState>();
-    const order = [ThemeMode.light, ThemeMode.dark, ThemeMode.system];
-    final next = order[(order.indexOf(st.themeMode) + 1) % order.length];
+    final resolvedDark = switch (st.themeMode) {
+      ThemeMode.light => false,
+      ThemeMode.dark => true,
+      _ => MediaQuery.platformBrightnessOf(context) == Brightness.dark,
+    };
+    final next = resolvedDark ? ThemeMode.light : ThemeMode.dark;
     await st.setThemeMode(next);
     if (mounted) {
-      snack(context, switch (next) {
-        ThemeMode.light => 'Theme: Light mode',
-        ThemeMode.dark => 'Theme: Dark mode',
-        _ => 'Theme: System default',
-      });
+      snack(context, next == ThemeMode.dark ? 'Theme: Dark mode' : 'Theme: Light mode');
     }
+  }
+
+  Future<void> _themeSystem() async {
+    final st = context.read<AppState>();
+    await st.setThemeMode(ThemeMode.system);
+    if (mounted) snack(context, "Theme: follows this device's setting");
   }
 
   // ---- the website's .topbar, on every tab ----
   PreferredSizeWidget _topBar(AppState st, bool resolvedDark) {
     final t = T(resolvedDark ? Brightness.dark : Brightness.light);
-    // web applyTheme(): system → gear, dark → sun, light → moon
-    final themeIcon = switch (st.themeMode) {
-      ThemeMode.system => Icons.settings_outlined,
-      _ => resolvedDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
-    };
+    // what you SEE decides the icon: moon in light mode, sun in dark mode.
+    // No gear — the gear looked like a settings button and did nothing visible.
+    final themeIcon = resolvedDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined;
     return AppBar(
       titleSpacing: 14,
       title: Row(children: [
@@ -98,7 +105,8 @@ class _ShellState extends State<Shell> {
         Padding(
           padding: const EdgeInsets.only(right: 6),
           child: GestureDetector(
-            onTap: _cycleTheme,
+            onTap: _toggleTheme,
+            onLongPress: _themeSystem,
             child: Container(
               width: 36, height: 36,
               decoration: BoxDecoration(

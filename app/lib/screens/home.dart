@@ -91,7 +91,10 @@ class _HomeScreenState extends State<HomeScreen> {
     final t = T(Theme.of(context).brightness);
     final st = context.watch<AppState>();
     final myTown = st.myTown;
-    final hasPos = st.myLat != null && st.myLng != null;
+    // ONLY a recent fix counts for "Houses near you" — a position saved hours
+    // ago (or an emulator's factory default point) made a hostel 200 m away
+    // read as "no hostel around". Stale position => browse by town instead.
+    final hasPos = st.posFresh();
 
     List<Listing> nearItems;
     if (hasPos) {

@@ -1,6 +1,7 @@
 // HuntInKE — shared helpers. Exact port of the website's ui.js helpers
 // (kes, timeAgo, distances, WhatsApp links) + image compression to data URLs.
 import 'dart:convert';
+import 'dart:io' show HttpClient;
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
@@ -50,6 +51,33 @@ Town? nearestTown(double lat, double lng) {
     if (d < bd) { bd = d; best = t; }
   }
   return best; // caller decides the distance cut-off (web: 60 km)
+}
+
+// ---------- map tile probe ----------
+// The map used to sit BLANK forever when the first tile source hung (a tile
+// request that never answers never reaches errorTileCallback, so the CARTO
+// fallback never fired). Now we probe ONE real tile with a hard 4 s limit at
+// screen open: answers = Google roads, no answer / error = CARTO Voyager. Both
+// are the same two sources the website's maps.js uses.
+Future<bool> tileSourceWorks(String urlTemplate, {List<String> subdomains = const ['0', '1', '2', '3'], Duration limit = const Duration(seconds: 4)}) async {
+  try {
+    final u = urlTemplate
+        .replaceAll('{s}', subdomains.first)
+        .replaceAll('{z}', '8')
+        .replaceAll('{x}', '117') // covers central Kenya
+        .replaceAll('{y}', '118')
+        .replaceAll('&s=Ga', '');
+    final client = HttpClient();
+    client.connectionTimeout = limit;
+    final req = await client.getUrl(Uri.parse(u));
+    final res = await req.close().timeout(limit);
+    final ok = res.statusCode == 200;
+    res.listen((_) {}, cancelOnError: true); // body not needed — status is the answer
+    client.close();
+    return ok;
+  } catch (_) {
+    return false;
+  }
 }
 
 String timeAgo(int? ts) {

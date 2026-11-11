@@ -195,6 +195,9 @@ class ListingCard extends StatelessWidget {
                   ),
                 ),
               const SizedBox(height: 8),
+              // narrow 2-column cards overflowed this row (caught by the widget
+              // tests: "RenderFlex overflowed by 84 px") — the views text must
+              // flex + ellipsize, never overflow
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
                 if (l.ownerVerified)
                   Row(mainAxisSize: MainAxisSize.min, children: [
@@ -204,8 +207,9 @@ class ListingCard extends StatelessWidget {
                   ])
                 else
                   const SizedBox.shrink(),
-                Text('${l.views} views · ${timeAgo(l.createdAt)}',
-                    style: TextStyle(fontSize: 11.5, color: t.ink3)),
+                Flexible(child: Text('${l.views} views · ${timeAgo(l.createdAt)}',
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11.5, color: t.ink3))),
               ]),
             ]),
           ),

@@ -34,7 +34,7 @@ class Api {
     try {
       final req = http.Request(method, uri)..headers.addAll(_h());
       if (body != null) req.body = jsonEncode(body);
-      res = await _c.send(req).timeout(const Duration(seconds: 40)).then(http.Response.fromStream);
+      res = await _c.send(req).timeout(const Duration(seconds: 18)).then(http.Response.fromStream);
     } on TimeoutException {
       throw ApiException('The internet is slow right now — try again.');
     } catch (_) {

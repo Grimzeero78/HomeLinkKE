@@ -37,11 +37,36 @@ class _ListingScreenState extends State<ListingScreen> {
   bool _isOwner = false;
   bool _isFav = false;
   int _gal = 0;
+  // Drives the big photo — WITHOUT a controller the arrows and thumbs changed
+  // the counter but the photo never moved (the bug the user reported).
+  final PageController _galCtrl = PageController();
 
   @override
   void initState() {
     super.initState();
     _load();
+    _pickTileSource();
+  }
+
+  // Same probe as the Map tab: if Google tiles hang or are blocked, the mini
+  // map opens straight on CARTO Voyager instead of a blank square.
+  Future<void> _pickTileSource() async {
+    final ok = await tileSourceWorks('https://mt{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga');
+    if (mounted && !ok) setState(() => _mapTilesFailed = true);
+  }
+
+  @override
+  void dispose() {
+    _galCtrl.dispose();
+    super.dispose();
+  }
+
+  // one path for arrows AND thumbs: move the photo, then update the state
+  void _goGal(int i) {
+    if (_photos.isEmpty) return;
+    final target = i % _photos.length;
+    setState(() => _gal = target);
+    _galCtrl.animateToPage(target, duration: const Duration(milliseconds: 260), curve: Curves.easeOut);
   }
 
   Future<void> _load() async {
@@ -55,14 +80,17 @@ class _ListingScreenState extends State<ListingScreen> {
       _similar = ((r['similar'] ?? []) as List).map((j) => Listing.fromJson((j as Map).cast<String, dynamic>())).toList();
       _isOwner = r['isOwner'] == true;
       _isFav = false;
+      // SHOW IT NOW. The old code waited on a second call (my favourites) before
+      // rendering — that double wait is exactly the "listing opening delays" bug.
+      setState(() => _loading = false);
+      // favourites + view counter continue quietly in the background
       if (st.user != null) {
-        try {
-          final f = await st.api.myFavorites();
-          _isFav = f.any((x) => ((x as Map)['id'] as num?)?.toInt() == l.id);
-        } catch (_) {}
+        st.api.myFavorites().then((f) {
+          if (!mounted) return;
+          setState(() => _isFav = f.any((x) => ((x as Map)['id'] as num?)?.toInt() == l.id));
+        }).catchError((_) {});
       }
       st.api.view(l.id); // view counter (server dedupes per visitor)
-      setState(() => _loading = false);
     } catch (e) {
       if (!mounted) return;
       setState(() { _error = e.toString().replaceFirst('ApiException: ', ''); _loading = false; });
@@ -171,6 +199,13 @@ class _ListingScreenState extends State<ListingScreen> {
     if (_error.isNotEmpty || _l == null) {
       return Scaffold(backgroundColor: t.bg, appBar: AppBar(), body: ListView(children: [
         EmptyBox(Icons.search_off, 'Listing not found', _error.isEmpty ? 'It may have been removed.' : _error),
+        // the 40-second dead spinner used to be the whole experience on a weak
+        // network — now every failure has an explicit way back in
+        Center(child: OutlinedButton.icon(
+          onPressed: () { setState(() { _error = ''; _loading = true; }); _load(); },
+          icon: const Icon(Icons.refresh, size: 18),
+          label: const Text('Try again'),
+        )),
       ]));
     }
     final l = _l!;
@@ -278,6 +313,7 @@ class _ListingScreenState extends State<ListingScreen> {
           aspectRatio: 4 / 3,
           child: Stack(children: [
             PageView.builder(
+              controller: _galCtrl,
               itemCount: _photos.length,
               onPageChanged: (i) => setState(() => _gal = i),
               itemBuilder: (context, i) => GestureDetector(
@@ -294,6 +330,8 @@ class _ListingScreenState extends State<ListingScreen> {
               Positioned(right: 10, top: 0, bottom: 0, child: Center(
                 child: _galNav(context, Icons.arrow_back_ios_new_rounded, false),
               )),
+              // invisible left/right halves of the photo let you swipe too —
+              // the whole photo area is a PageView so both drag and buttons work
               // web .gal-count: right 10, bottom 10
               Positioned(
                 right: 10, bottom: 10,
@@ -318,8 +356,9 @@ class _ListingScreenState extends State<ListingScreen> {
             itemCount: _photos.length,
             separatorBuilder: (_, __) => const SizedBox(width: 8),
             itemBuilder: (context, i) => GestureDetector(
-              onTap: () => setState(() => _gal = i),
+              onTap: () => _goGal(i),
               child: Container(
+                key: ValueKey('thumb$i'),
                 width: 62, height: 48,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(9),
@@ -339,10 +378,7 @@ class _ListingScreenState extends State<ListingScreen> {
 
   Widget _galNav(BuildContext context, IconData icon, bool back) {
     return GestureDetector(
-      onTap: () {
-        if (_photos.isEmpty) return;
-        setState(() => _gal = (_gal + (back ? -1 : 1) + _photos.length) % _photos.length);
-      },
+      onTap: () => _goGal(_gal + (back ? -1 : 1)),
       child: Container(
         width: 38, height: 38,
         decoration: const BoxDecoration(

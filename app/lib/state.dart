@@ -21,8 +21,12 @@ class AppState extends ChangeNotifier {
   String paybillName = 'Isaac Bridget';
 
   // the town the renter is browsing + their GPS position (persisted, like the web)
+  // myPosTs = when the fix was taken. A position saved LAST SESSION (or an
+  // emulator's factory default) silently poisoned "Houses near you" — the 200 m
+  // hostel bug. Now stale positions stop counting after 30 minutes.
   String myTown = '';
   double? myLat, myLng;
+  int? myPosTs;
 
   ThemeMode themeMode = ThemeMode.system;
 
@@ -41,6 +45,7 @@ class AppState extends ChangeNotifier {
       myTown = _prefs!.getString('hl_town') ?? '';
       myLat = _prefs!.getDouble('hl_lat');
       myLng = _prefs!.getDouble('hl_lng');
+      myPosTs = _prefs!.getInt('hl_pos_ts');
       switch (_prefs!.getString('hl_theme')) {
         case 'light': themeMode = ThemeMode.light;
         case 'dark': themeMode = ThemeMode.dark;
@@ -133,9 +138,21 @@ class AppState extends ChangeNotifier {
   Future<void> setMyPos(double lat, double lng) async {
     myLat = lat;
     myLng = lng;
+    myPosTs = DateTime.now().millisecondsSinceEpoch;
     await _prefs!.setDouble('hl_lat', lat);
     await _prefs!.setDouble('hl_lng', lng);
+    await _prefs!.setInt('hl_pos_ts', myPosTs!);
     notifyListeners();
+  }
+
+  /// true when the saved position exists AND is recent enough to trust for
+  /// "Houses near you". A fix older than [maxAge] (default 30 min) is stale —
+  /// the app then falls back to town browsing until the user re-locates.
+  bool posFresh({Duration maxAge = const Duration(minutes: 30)}) {
+    if (myLat == null || myLng == null) return false;
+    final ts = myPosTs;
+    if (ts == null) return false; // pre-timestamp position: unknown age, don't trust
+    return DateTime.now().millisecondsSinceEpoch - ts <= maxAge.inMilliseconds;
   }
 
   // ---------- theme ----------
