@@ -92,7 +92,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (st.user == null) {
       return Scaffold(
         backgroundColor: t.bg,
-        appBar: AppBar(title: const Text('Profile')),
         body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.person_outline, size: 46, color: t.ink3),
           const SizedBox(height: 10),
@@ -114,7 +113,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return Scaffold(
       backgroundColor: t.bg,
-      appBar: AppBar(title: const Text('My profile')),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(14, 4, 14, 100),
         children: [

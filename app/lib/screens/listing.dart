@@ -3,6 +3,7 @@
 // Save · Share · Report, never-pay notice, key facts, search tags, mini map +
 // Google Maps links, utilities, inside the unit, security & tenants, pricing,
 // owner card (Call / WhatsApp / Message in app), similar houses.
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' as ll;
@@ -265,14 +266,16 @@ class _ListingScreenState extends State<ListingScreen> {
     );
   }
 
-  // ---- gallery ----
+  // ---- gallery: web .gallery + .gal-nav + .gal-count + .gal-thumbs ----
+  // Side arrows (the buttons the user asked for), count pill bottom-right,
+  // thumbs row with a pine border on the active one, tap photo = lightbox.
   Widget _gallery(BuildContext context) {
     final t = T(Theme.of(context).brightness);
     return Column(children: [
       ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          height: 260,
+        child: AspectRatio(
+          aspectRatio: 4 / 3,
           child: Stack(children: [
             PageView.builder(
               itemCount: _photos.length,
@@ -284,20 +287,73 @@ class _ListingScreenState extends State<ListingScreen> {
               ),
             ),
             if (_photos.length > 1) ...[
+              // web .gal-nav: 38px white circles, left/right 10
+              Positioned(left: 10, top: 0, bottom: 0, child: Center(
+                child: _galNav(context, Icons.arrow_back_ios_new_rounded, true),
+              )),
+              Positioned(right: 10, top: 0, bottom: 0, child: Center(
+                child: _galNav(context, Icons.arrow_back_ios_new_rounded, false),
+              )),
+              // web .gal-count: right 10, bottom 10
               Positioned(
-                left: 8, bottom: 10,
+                right: 10, bottom: 10,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(99)),
+                  decoration: BoxDecoration(color: const Color(0xB80A1E12), borderRadius: BorderRadius.circular(99)),
                   child: Text('${_gal + 1}/${_photos.length}',
-                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                      style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
           ]),
         ),
       ),
-    ],
+      // web .gal-thumbs: 62x48 thumbs, radius 9, 2px pine border when active
+      if (_photos.length > 1)
+        SizedBox(
+          height: 56,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.only(top: 8),
+            itemCount: _photos.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, i) => GestureDetector(
+              onTap: () => setState(() => _gal = i),
+              child: Container(
+                width: 62, height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(color: i == _gal ? t.pine : Colors.transparent, width: 2),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: DataImg(_photos[i].url, cachePx: 124, fit: BoxFit.cover,
+                      placeholder: Container(color: t.galBg)),
+                ),
+              ),
+            ),
+          ),
+        ),
+    ]);
+  }
+
+  Widget _galNav(BuildContext context, IconData icon, bool back) {
+    return GestureDetector(
+      onTap: () {
+        if (_photos.isEmpty) return;
+        setState(() => _gal = (_gal + (back ? -1 : 1) + _photos.length) % _photos.length);
+      },
+      child: Container(
+        width: 38, height: 38,
+        decoration: const BoxDecoration(
+          color: Color(0xEBFFFFFF),
+          shape: BoxShape.circle,
+          boxShadow: [BoxShadow(color: Color(0x26000000), blurRadius: 8, offset: Offset(0, 2))],
+        ),
+        alignment: Alignment.center,
+        child: Icon(icon, size: 16, color: C.ink,
+            textDirection: back ? TextDirection.ltr : TextDirection.rtl),
+      ),
     );
   }
 
@@ -531,6 +587,11 @@ class _ListingScreenState extends State<ListingScreen> {
       return Text('The landlord has not pinned this property on the map yet. Ask for directions in the chat.',
           style: TextStyle(fontSize: 13, color: t.ink2, height: 1.5));
     }
+    // Same tile sources as the website (maps.js): Google roads first, silent
+    // swap to CARTO Voyager if tiles keep failing.
+    const tileGoogle = 'https://mt{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga';
+    const tileCarto = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+    final carto = _mapTilesFailed;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -539,21 +600,41 @@ class _ListingScreenState extends State<ListingScreen> {
           child: FlutterMap(
             options: MapOptions(
               initialCenter: ll.LatLng(l.lat!, l.lng!),
-              initialZoom: 16,
-              interactionOptions: const InteractionOptions(flags: InteractiveFlag.all),
+              initialZoom: 17,
+              // THE WEBSITE FIX: an embedded map never hijacks the page scroll
+              // (maps.js mode 'page' — phone swipes scroll the page). So here:
+              // pinch + double-tap zoom ONLY, no one-finger drag.
+              interactionOptions: const InteractionOptions(
+                flags: InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+              ),
+              onTap: (_, __) => _pinPopup(context, l),
             ),
             children: [
-              TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'ke.huntin.app'),
+              TileLayer(
+                urlTemplate: carto ? tileCarto : tileGoogle,
+                subdomains: carto ? const ['a', 'b', 'c', 'd'] : const ['0', '1', '2', '3'],
+                maxNativeZoom: 20,
+                userAgentPackageName: 'com.huntin.ke',
+                errorTileCallback: (_, __, ___) {
+                  if (!carto && mounted && !_mapTilesFailed) {
+                    _tileErrs++;
+                    if (_tileErrs >= 8) setState(() => _mapTilesFailed = true);
+                  }
+                },
+              ),
               MarkerLayer(markers: [
-                Marker(point: ll.LatLng(l.lat!, l.lng!), width: 40, height: 40, child:
-                  const Icon(Icons.location_on, size: 40, color: C.bad)),
+                Marker(
+                  point: ll.LatLng(l.lat!, l.lng!), width: 34, height: 30,
+                  alignment: Alignment.bottomCenter, // tip of the pin touches the spot
+                  child: GestureDetector(onTap: () => _pinPopup(context, l), child: const _RedPin()),
+                ),
               ]),
             ],
           ),
         ),
       ),
       const SizedBox(height: 8),
-      Text('OpenStreetMap — tap and drag to explore the area around the pin.',
+      Text('Pinch to zoom the map. Scrolling the page never moves the map — same as the website.',
           style: TextStyle(fontSize: 12, color: t.ink3)),
       const SizedBox(height: 9),
       Wrap(spacing: 8, runSpacing: 8, children: [
@@ -573,6 +654,26 @@ class _ListingScreenState extends State<ListingScreen> {
         ),
       ]),
     ]);
+  }
+
+  int _tileErrs = 0;
+  bool _mapTilesFailed = false;
+
+  // web: the listing pin carries a popup with the house name + area
+  void _pinPopup(BuildContext context, Listing l) {
+    final t = T(Theme.of(context).brightness);
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5, color: t.ink)),
+          const SizedBox(height: 4),
+          Text([l.town, if (l.area.isNotEmpty) l.area, if (l.landmark.isNotEmpty) l.landmark].join(' · '),
+              style: TextStyle(fontSize: 13, color: t.ink2)),
+        ]),
+      ),
+    );
   }
 
   String? _y(String? v) => (v == null || v.isEmpty) ? null : v;
@@ -646,5 +747,46 @@ class _ListingScreenState extends State<ListingScreen> {
           child: Text((r['terms'] ?? '').toString(), style: TextStyle(fontSize: 13.2, color: t.ink2, height: 1.55)),
         ),
     ]);
+  }
+}
+
+// web .gpin — the exact red teardrop the website drops on a pinned house:
+// 24px #E94335 circle with one sharp corner, 2.5px white border, 9px white
+// centre dot, rotated -45° so the tip points down at the exact spot.
+class _RedPin extends StatelessWidget {
+  const _RedPin();
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 34, height: 30,
+      child: Stack(children: [
+        Positioned(
+          left: 5, top: 0,
+          child: Transform.rotate(
+            angle: -math.pi / 4, // same -45° as the website's .gpin
+            child: Container(
+              width: 24, height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE94335),
+                border: Border.all(color: Colors.white, width: 2.5),
+                // three round corners + a sharp bottom-left (web border-radius
+                // 50% 50% 50% 0); after the -45° rotation the sharp corner
+                // points straight down at the spot.
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                  bottomRight: Radius.circular(12),
+                ),
+                boxShadow: const [BoxShadow(color: Color(0x59000000), blurRadius: 4, offset: Offset(0, 3))],
+              ),
+              child: Center(
+                child: Container(width: 9, height: 9,
+                    decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle)),
+              ),
+            ),
+          ),
+        ),
+      ]),
+    );
   }
 }

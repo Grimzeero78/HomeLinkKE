@@ -68,9 +68,18 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
 
   Position? fix;
   try {
-    try { fix = await Geolocator.getLastKnownPosition(); } catch (_) {} // instant if cached
+    // A cached fix can be HOURS old (or an emulator's default position from
+    // when the AVD was created) — trusting it blindly is what put people in
+    // the wrong town and said "no houses near you" for a hostel 200 m away.
+    // So: use the cache only if it is fresh; otherwise hunt a fresh fix and
+    // keep the stale cache only as the very last resort.
+    Position? last;
+    try { last = await Geolocator.getLastKnownPosition(); } catch (_) {}
+    if (_freshEnough(last, const Duration(minutes: 10))) fix = last;
     fix ??= await _fresh(LocationAccuracy.medium, const Duration(seconds: 18));
-    fix ??= await _fresh(LocationAccuracy.low, const Duration(seconds: 12));
+    fix ??= await _fresh(LocationAccuracy.low, const Duration(seconds: 12)); // network — the one that usually locks on emulators
+    fix ??= await _fresh(LocationAccuracy.high, const Duration(seconds: 20));
+    fix ??= last; // stale but better than nothing
   } finally {
     try { if (nav.canPop()) nav.pop(); } catch (_) {}
   }
@@ -90,4 +99,9 @@ Future<Position?> _fresh(LocationAccuracy acc, Duration limit) async {
   } catch (_) {
     return null; // timeout / provider error — try the next chain step
   }
+}
+
+bool _freshEnough(Position? p, Duration maxAge) {
+  if (p == null) return false;
+  try { return DateTime.now().difference(p.timestamp) <= maxAge; } catch (_) { return false; }
 }

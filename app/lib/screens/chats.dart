@@ -59,7 +59,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
     if (st.user == null) {
       return Scaffold(
         backgroundColor: t.bg,
-        appBar: AppBar(title: const Text('Chats')),
         body: Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Icon(Icons.chat_bubble_outline, size: 46, color: t.ink3),
           const SizedBox(height: 10),
@@ -78,7 +77,6 @@ class _ChatsScreenState extends State<ChatsScreen> {
     }
     return Scaffold(
       backgroundColor: t.bg,
-      appBar: AppBar(title: const Text('Chats')),
       body: RefreshIndicator(
         color: C.ember,
         onRefresh: _load,
