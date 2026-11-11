@@ -3,12 +3,14 @@
 //   1. asks the permission (and opens App Settings if it was permanently blocked)
 //   2. if GPS service is OFF: opens the settings switch and AUTO-CONTINUES the
 //      moment the user turns it on — no need to press the button again
-//   3. tries the last known fix first (instant on most devices/emulators)
-//   4. waits up to 30s for a fresh fix, with a clear message if it never locks
+//   3. shows a progress dialog the whole time (no silent waits, no double-taps)
+//   4. fix chain: last known → fresh medium (18s) → fresh low (12s, network —
+//      this is the one that usually locks on emulators) → clear error message
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'theme.dart';
 import 'widgets.dart';
 
 Future<Position?> huntinGetLocation(BuildContext context) async {
@@ -45,22 +47,47 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
     }
   }
 
-  // 3) last known fix first — instant on most devices
-  try {
-    final last = await Geolocator.getLastKnownPosition();
-    if (last != null) return last;
-  } catch (_) {}
+  // 3) progress dialog while we hunt for a fix — the user always sees state
+  final nav = Navigator.of(context, rootNavigator: true);
+  unawaited(showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (ctx) => PopScope(
+      canPop: false,
+      child: AlertDialog(
+        content: Row(mainAxisSize: MainAxisSize.min, children: [
+          const SizedBox(width: 22, height: 22,
+              child: CircularProgressIndicator(strokeWidth: 2.6)),
+          const SizedBox(width: 16),
+          Expanded(child: Text('Getting your location…',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: T(Theme.of(ctx).brightness).ink))),
+        ]),
+      ),
+    ),
+  ));
 
-  // 4) fresh fix
+  Position? fix;
   try {
-    return await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.medium, timeLimit: const Duration(seconds: 30));
-  } on TimeoutException {
-    if (context.mounted) {
-      snack(context, 'GPS is taking too long — press again, or pick your town below', error: true);
-    }
-  } catch (_) {
-    if (context.mounted) snack(context, 'Could not get your location — pick your town instead', error: true);
+    try { fix = await Geolocator.getLastKnownPosition(); } catch (_) {} // instant if cached
+    fix ??= await _fresh(LocationAccuracy.medium, const Duration(seconds: 18));
+    fix ??= await _fresh(LocationAccuracy.low, const Duration(seconds: 12));
+  } finally {
+    try { if (nav.canPop()) nav.pop(); } catch (_) {}
+  }
+
+  if (fix != null) return fix;
+  if (context.mounted) {
+    snack(context,
+        'No GPS fix yet — press again. On a phone: go outside and retry. On an emulator: Extended Controls (⋮) → Location → set a point → Set Location.',
+        error: true);
   }
   return null;
+}
+
+Future<Position?> _fresh(LocationAccuracy acc, Duration limit) async {
+  try {
+    return await Geolocator.getCurrentPosition(desiredAccuracy: acc, timeLimit: limit);
+  } catch (_) {
+    return null; // timeout / provider error — try the next chain step
+  }
 }

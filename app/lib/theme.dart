@@ -2,6 +2,12 @@
 // (:root light vars + html[data-theme=dark] overrides). Pine / ember / cream.
 import 'package:flutter/material.dart';
 
+// Font families — the exact two the website loads from Google Fonts
+// (public/index.html): Instrument Sans = body, Bricolage Grotesque = display
+// (brand wordmark, prices, section heads, hero title, page titles).
+const String kBody = 'Instrument Sans';
+const String kDisp = 'Bricolage Grotesque';
+
 class C {
   // light
   static const pine = Color(0xFF0E5A33);
@@ -103,6 +109,7 @@ ThemeData huntinTheme(Brightness b) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
+    fontFamily: kBody, // everything defaults to the website's body font
     scaffoldBackgroundColor: t.bg,
     appBarTheme: AppBarTheme(
       backgroundColor: t.bg.withValues(alpha: .95),
@@ -112,6 +119,7 @@ ThemeData huntinTheme(Brightness b) {
       scrolledUnderElevation: 0,
       centerTitle: false,
       titleTextStyle: TextStyle(
+          fontFamily: kDisp,
           fontSize: 20, fontWeight: FontWeight.w800, color: t.pineInk, letterSpacing: -.3),
     ),
     cardTheme: CardThemeData(
