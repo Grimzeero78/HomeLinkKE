@@ -174,6 +174,32 @@ class _MapScreenState extends State<MapScreen> {
     Navigator.push(context, MaterialPageRoute(builder: (_) => ListingScreen(l.id)));
   }
 
+  // web: tapping a price chip opens a popup with the NAME + PRICE on top and
+  // "Open listing →" — the popup is the thing the user asked for.
+  void _pinPopup(Listing l) {
+    final t = T(Theme.of(context).brightness);
+    final dl = _dist.containsKey(l.id) ? ' · ${fmtDist(_dist[l.id]!)} away' : '';
+    showModalBottomSheet(
+      context: context,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.fromLTRB(20, 8, 20, 20 + MediaQuery.of(ctx).viewInsets.bottom),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(l.title, style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15.5, color: t.ink)),
+          const SizedBox(height: 4),
+          Text('${kes(l.rent)}/${perShort(l.period)} · ${l.town}'
+              '${l.area.isNotEmpty ? ' · ${l.area}' : ''}$dl',
+              style: TextStyle(fontSize: 13, color: t.ink2)),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: () { Navigator.pop(ctx); _openListing(l); },
+            child: Text('Open listing →', style: TextStyle(
+                fontSize: 13.5, fontWeight: FontWeight.w800, color: C.ember)),
+          ),
+        ]),
+      ),
+    );
+  }
+
   void _flyTo(Listing l) {
     if (!l.hasLocation) {
       snack(context, 'This house is not pinned yet — ask the landlord in chat', error: true);
@@ -256,8 +282,16 @@ class _MapScreenState extends State<MapScreen> {
 
     return Scaffold(
       backgroundColor: t.bg,
-      appBar: AppBar(title: const Text('Map of houses in Kenya')),
+      // topbar (brand + theme) is global in the Shell — the web view has just a
+      // section heading inside the content, so we do the same here.
       body: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 10, 14, 0),
+          child: Align(alignment: Alignment.centerLeft,
+              child: Text('Map of houses in Kenya', style: TextStyle(
+                  fontFamily: kDisp, fontWeight: FontWeight.w800, fontSize: 19,
+                  color: t.ink, letterSpacing: -.3))),
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 2, 14, 0),
           child: Row(children: [
@@ -352,21 +386,33 @@ class _MapScreenState extends State<MapScreen> {
                           for (final l in _shown.where((x) => x.hasLocation))
                             Marker(
                               point: ll.LatLng(l.lat!, l.lng!),
-                              width: 66, height: 30,
-                              alignment: Alignment.topCenter,
+                              width: 90, height: 30,
+                              // web priceIcon iconAnchor = bottom-centre: the
+                              // chip floats ABOVE the exact spot
+                              alignment: Alignment.bottomCenter,
                               child: GestureDetector(
-                                onTap: () => _openListing(l),
+                                // web .gprice: white pill, dark 800 12px text,
+                                // thin border, soft shadow — the same chip on
+                                // every pin; boosted houses keep the orange bolt.
+                                onTap: () => _pinPopup(l),
                                 child: Container(
                                   decoration: BoxDecoration(
-                                    color: l.boosted ? C.ember : t.pineBtn,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: Colors.white, width: 1.6),
-                                    boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 5, offset: Offset(0, 2))],
+                                    color: t.card,
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(color: const Color(0x24080E0A), width: 1),
+                                    boxShadow: const [BoxShadow(color: Color(0x38080E0A), blurRadius: 10, offset: Offset(0, 2))],
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
-                                  child: Text('${shortK(l.rent)}/${perShort(l.period)}',
-                                      textAlign: TextAlign.center,
-                                      style: const TextStyle(color: Colors.white, fontSize: 10.5, fontWeight: FontWeight.w800)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                                    if (l.boosted) ...[
+                                      const Icon(Icons.bolt, size: 11, color: C.ember),
+                                      const SizedBox(width: 2),
+                                    ],
+                                    Text(shortK(l.rent), style: TextStyle(
+                                        fontSize: 12, fontWeight: FontWeight.w800, color: t.ink)),
+                                    Text('/${perShort(l.period)}', style: TextStyle(
+                                        fontSize: 10.5, fontWeight: FontWeight.w700, color: t.ink2)),
+                                  ]),
                                 ),
                               ),
                             ),
@@ -392,7 +438,7 @@ class _MapScreenState extends State<MapScreen> {
           child: Row(children: [
             Icon(Icons.info_outline, size: 13, color: t.ink3),
             const SizedBox(width: 6),
-            Expanded(child: Text('Tap a price chip to open the listing. Use the ${_shown.length} houses button for the full list.',
+            Expanded(child: Text('Tap a price chip for the name and price — then open the listing. Use the ${_shown.length} houses button for the full list.',
                 style: TextStyle(fontSize: 11.5, color: t.ink3))),
           ]),
         ),

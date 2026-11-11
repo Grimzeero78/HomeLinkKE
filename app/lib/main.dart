@@ -1,5 +1,6 @@
 // HuntInKE — app entry. Boots the session (same token the browser saves), starts
 // notifications, applies the light/dark/system theme and shows the splash → app.
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'notifs.dart';
@@ -36,10 +37,18 @@ class HuntInApp extends StatefulWidget {
 }
 
 class _HuntInAppState extends State<HuntInApp> {
+  // The website holds its splash for 2.8s (styles.css @keyframes splashAway).
+  // We hold at least 2.4s too — the brand moment (logo + name) is the thing the
+  // user asked for; without this the splash flashed for 100ms and was gone.
+  bool _splashDone = false;
+
   @override
   void initState() {
     super.initState();
     widget.state.boot();
+    Timer(const Duration(milliseconds: 2400), () {
+      if (mounted) setState(() => _splashDone = true);
+    });
   }
 
   @override
@@ -56,48 +65,54 @@ class _HuntInAppState extends State<HuntInApp> {
           // ALWAYS open the app shell (Home · Search · Map · Chats · Profile).
           // Guests browse freely — same as the website — and sign in only when
           // they tap Sign in / save a house / message a landlord.
-          home: !st.ready ? const _Splash() : const Shell(),
+          home: (!st.ready || !_splashDone) ? const _Splash() : const Shell(),
         ),
       ),
     );
   }
 }
 
-// splash — pixel port of the website's #splash (.splash-card): pine background,
-// clean icon-192 with the same soft shadow, display-font wordmark, tagline.
+// splash — pixel port of the website's #splash: 160° pine→pine-deep gradient,
+// clean icon-192 (66px, radius 18, same shadows), display-font wordmark with
+// the peach "IN" — exactly web .splash-card (logo + name, nothing else).
 class _Splash extends StatelessWidget {
   const _Splash();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: C.pine,
-      body: Center(
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Container(
-            width: 66, height: 66,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              boxShadow: const [
-                BoxShadow(color: Color(0x52000000), blurRadius: 32, offset: Offset(0, 12)),
-                BoxShadow(color: Color(0x24FFFFFF), blurRadius: 0, spreadRadius: 1),
-              ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment(-0.4, -1), end: Alignment(0.4, 1),
+            colors: [C.pine, C.pineDeep],
+          ),
+        ),
+        child: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(
+              width: 66, height: 66,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x52000000), blurRadius: 32, offset: Offset(0, 12)),
+                  BoxShadow(color: Color(0x24FFFFFF), blurRadius: 0, spreadRadius: 1),
+                ],
+              ),
+              child: ClipRRect(borderRadius: BorderRadius.circular(18),
+                  child: Image.asset('assets/icon/icon-192.png',
+                      errorBuilder: (_, __, ___) => const Icon(Icons.home, color: Colors.white, size: 52))),
             ),
-            child: ClipRRect(borderRadius: BorderRadius.circular(18),
-                child: Image.asset('assets/icon/icon-192.png',
-                    errorBuilder: (_, __, ___) => const Icon(Icons.home, color: Colors.white, size: 52))),
-          ),
-          const SizedBox(height: 12),
-          // web .splash-word: display font 600 22px white, "IN" 800 #ffd9b8
-          Text.rich(
-            TextSpan(children: [
-              TextSpan(text: 'HUNT', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
-              TextSpan(text: 'IN', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFFFFD9B8), letterSpacing: .45)),
-              TextSpan(text: 'KE', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
-            ]),
-          ),
-          const SizedBox(height: 10),
-          Text('Vacant houses across Kenya', style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: .75))),
-        ]),
+            const SizedBox(height: 12),
+            // web .splash-word: display font 600 22px white, "IN" 800 #ffd9b8
+            Text.rich(
+              TextSpan(children: [
+                TextSpan(text: 'HUNT', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
+                TextSpan(text: 'IN', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFFFFD9B8), letterSpacing: .45)),
+                TextSpan(text: 'KE', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
+              ]),
+            ),
+          ]),
+        ),
       ),
     );
   }

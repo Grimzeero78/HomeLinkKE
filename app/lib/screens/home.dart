@@ -104,52 +104,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       backgroundColor: t.bg,
-      appBar: AppBar(
-        titleSpacing: 14,
-        title: Row(children: [
-          // web .brand-logo-sm: 25px, radius 7, soft green glow — clean icon-192
-          Container(
-            width: 25, height: 25,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(7),
-              boxShadow: [BoxShadow(color: C.pine.withValues(alpha: .45), blurRadius: 7, offset: const Offset(0, 2), spreadRadius: -2)],
-            ),
-            child: ClipRRect(borderRadius: BorderRadius.circular(7),
-                child: Image.asset('assets/icon/icon-192.png', width: 25, height: 25, errorBuilder: (_, __, ___) => const SizedBox.shrink())),
-          ),
-          const SizedBox(width: 7),
-          const BrandWord(size: 16.5),
-        ]),
-        actions: [
-          if (st.user == null) ...[
-            Padding(
-              padding: const EdgeInsets.only(right: 6),
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 34), padding: const EdgeInsets.symmetric(horizontal: 11)),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen())),
-                child: const Text('Sign in', style: TextStyle(fontSize: 12.5)),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(minimumSize: const Size(0, 34), padding: const EdgeInsets.symmetric(horizontal: 11)),
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen())),
-                child: const Text('Join', style: TextStyle(fontSize: 12.5)),
-              ),
-            ),
-          ] else
-            Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(minimumSize: const Size(0, 34), padding: const EdgeInsets.symmetric(horizontal: 11)),
-                onPressed: () => _openTab(4),
-                child: Text((st.user!.name.isNotEmpty ? st.user!.name : st.user!.username).split(' ').first,
-                    style: const TextStyle(fontSize: 12.5)),
-              ),
-            ),
-        ],
-      ),
+      // NOTE: the brand topbar (logo + wordmark + theme + sign in) lives in the
+      // Shell, exactly like the website where one .topbar sits on every page.
       body: RefreshIndicator(
         color: C.ember,
         onRefresh: _load,
@@ -204,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Stack(children: [
-        Positioned(right: -30, top: -30, child: Container(width: 130, height: 130,
+        Positioned(right: -30, top: -30, child: Container(width: 160, height: 160,
             decoration: BoxDecoration(shape: BoxShape.circle, color: Colors.white.withValues(alpha: .06)))),
         Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('Find a house anywhere in Kenya',
@@ -220,8 +176,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: q,
                 onSubmitted: (v) => _openSearch(q: v.trim()),
                 style: const TextStyle(fontSize: 14.5),
+                // web .hero-search .inp{border:none} — plain white pill
                 decoration: const InputDecoration(
-                    hintText: 'Search town, estate, landmark…', filled: true),
+                    hintText: 'Search town, estate, landmark…', filled: true,
+                    border: InputBorder.none, enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none),
               ),
             ),
             const SizedBox(width: 8),

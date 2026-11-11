@@ -121,10 +121,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final count = _items.length == 1 ? '1 house found' : '${_items.length} houses found';
     return Scaffold(
       backgroundColor: t.bg,
-      appBar: AppBar(
-        titleSpacing: 14,
-        title: const Text('Search'),
-      ),
+      // topbar (brand + theme) is global in the Shell — same as the website
       body: Column(children: [
         // filter bar
         Padding(
@@ -146,7 +143,8 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
               onPressed: () => setState(() => _filtersOpen = !_filtersOpen),
               child: Stack(alignment: Alignment.center, children: [
-                const Icon(Icons.tune, size: 20),
+                // web uses its gear icon for the Filters button
+                const Icon(Icons.settings_outlined, size: 19),
                 if (_hasFilters)
                   Positioned(top: 8, right: 8, child: Container(width: 7, height: 7,
                       decoration: BoxDecoration(shape: BoxShape.circle, color: C.ember))),

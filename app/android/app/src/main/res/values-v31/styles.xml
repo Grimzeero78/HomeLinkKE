@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ system splash: flat pine background + the clean house mark.
+     (API 31 replaces launch_background with the system splash screen, so without
+     this the phone showed the DEFAULT white/grey splash with a stock icon.) -->
+<style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <item name="android:windowBackground">@drawable/launch_background</item>
+    <item name="android:windowSplashScreenBackground">@color/pine</item>
+    <item name="android:windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+    <item name="android:windowSplashScreenIconBackgroundColor">@color/pine</item>
+</style>
+<style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+    <item name="android:windowBackground">?android:colorBackground</item>
+</style>
