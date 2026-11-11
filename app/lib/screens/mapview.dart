@@ -15,6 +15,7 @@ import '../loc.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../tiles.dart';
 import '../util.dart';
 import '../widgets.dart';
 import 'listing.dart';
@@ -43,10 +44,8 @@ class _MapScreenState extends State<MapScreen> {
   String _rad = '';
   ll.LatLng? _center; // filter centre (GPS or searched place)
   final Map<int, double> _dist = {};
-
-  // Use CARTO directly instead of probing an unauthenticated Google tile URL.
-  static const _tileCarto =
-      'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+  bool _loadFailed = false; // listings API failed — map still works
+  bool _onBackup = false; // tiles swapped Google -> CARTO (like the website)
 
   @override
   void initState() {
@@ -71,14 +70,21 @@ class _MapScreenState extends State<MapScreen> {
           .toList();
       if (st.posFresh()) _center = ll.LatLng(st.myLat!, st.myLng!);
       _applyFilter();
-      setState(() => _loading = false);
+      setState(() {
+        _loading = false;
+        _loadFailed = false;
+      });
       // fit the map after the first frame
       WidgetsBinding.instance.addPostFrameCallback((_) => _fitAll());
-    } catch (e) {
+    } catch (_) {
+      // THE MAP NEVER DIES: houses failed but the map itself still draws, and
+      // a retry chip sits over it — the website behaves the same way (the map
+      // is up before the houses arrive).
       if (!mounted) return;
-      setState(() => _loading = false);
-      snack(context, e.toString().replaceFirst('ApiException: ', ''),
-          error: true);
+      setState(() {
+        _loading = false;
+        _loadFailed = true;
+      });
     }
   }
 
@@ -462,101 +468,160 @@ class _MapScreenState extends State<MapScreen> {
           ),
         ),
         Expanded(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : Stack(
-                  children: [
-                    FlutterMap(
-                      mapController: _map,
-                      options: MapOptions(
-                        initialCenter: start,
-                        initialZoom: st.posFresh()
-                            ? 15
-                            : (st.myTown.isNotEmpty ? 13 : 7),
-                        minZoom: 6,
-                      ),
-                      children: [
-                        TileLayer(
-                          urlTemplate: _tileCarto,
-                          subdomains: const ['a', 'b', 'c', 'd'],
-                          maxNativeZoom: 20,
-                          userAgentPackageName: 'com.huntin.ke',
-                        ),
-                        MarkerLayer(
-                          markers: [
-                            for (final l in _shown.where((x) => x.hasLocation))
-                              Marker(
-                                point: ll.LatLng(l.lat!, l.lng!),
-                                width: 90, height: 30,
-                                // web priceIcon iconAnchor = bottom-centre: the
-                                // chip floats ABOVE the exact spot
-                                alignment: Alignment.bottomCenter,
-                                child: GestureDetector(
-                                  // web .gprice: white pill, dark 800 12px text,
-                                  // thin border, soft shadow — the same chip on
-                                  // every pin; boosted houses keep the orange bolt.
-                                  onTap: () => _pinPopup(l),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color: t.card,
-                                      borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                          color: const Color(0x24080E0A),
-                                          width: 1),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                            color: Color(0x38080E0A),
-                                            blurRadius: 10,
-                                            offset: Offset(0, 2))
-                                      ],
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 10, vertical: 4),
-                                    child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          if (l.boosted) ...[
-                                            const Icon(Icons.bolt,
-                                                size: 11, color: C.ember),
-                                            const SizedBox(width: 2),
-                                          ],
-                                          Text(shortK(l.rent),
-                                              style: TextStyle(
-                                                  fontSize: 12,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: t.ink)),
-                                          Text('/${perShort(l.period)}',
-                                              style: TextStyle(
-                                                  fontSize: 10.5,
-                                                  fontWeight: FontWeight.w700,
-                                                  color: t.ink2)),
-                                        ]),
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const RichAttributionWidget(
-                          attributions: [
-                            TextSourceAttribution(
-                                '© OpenStreetMap contributors © CARTO')
-                          ],
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      right: 12,
-                      bottom: 18,
-                      child: FloatingActionButton.small(
-                        backgroundColor: t.card,
-                        foregroundColor: t.pine,
-                        heroTag: 'map-loc',
-                        onPressed: _useMyLocation,
-                        child: const Icon(Icons.my_location, size: 20),
-                      ),
-                    ),
-                  ],
+          // THE WEBSITE RULE: the map is up instantly — houses load into it in
+          // the background (chips above show progress / retry). A slow or dead
+          // listings API can never blank the map again.
+          child: Stack(
+            children: [
+              FlutterMap(
+                mapController: _map,
+                options: MapOptions(
+                  initialCenter: start,
+                  initialZoom:
+                      st.posFresh() ? 15 : (st.myTown.isNotEmpty ? 13 : 7),
+                  minZoom: 6,
+                  maxZoom: 21, // website zoomMax (over-zoom past z20)
                 ),
+                children: [
+                  // website tile engine: Google roads + silent CARTO backup
+                  HuntinTiles(
+                    onFallback: () {
+                      if (!mounted) return;
+                      setState(() => _onBackup = true);
+                      snack(context,
+                          'Google map unreachable right now — switched to a backup map style.');
+                    },
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      for (final l in _shown.where((x) => x.hasLocation))
+                        Marker(
+                          point: ll.LatLng(l.lat!, l.lng!),
+                          width: 90, height: 30,
+                          // web priceIcon iconAnchor = bottom-centre: the
+                          // chip floats ABOVE the exact spot
+                          alignment: Alignment.bottomCenter,
+                          child: GestureDetector(
+                            // web .gprice: white pill, dark 800 12px text,
+                            // thin border, soft shadow — the same chip on
+                            // every pin; boosted houses keep the orange bolt.
+                            onTap: () => _pinPopup(l),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: t.card,
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
+                                    color: const Color(0x24080E0A), width: 1),
+                                boxShadow: const [
+                                  BoxShadow(
+                                      color: Color(0x38080E0A),
+                                      blurRadius: 10,
+                                      offset: Offset(0, 2))
+                                ],
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 4),
+                              child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (l.boosted) ...[
+                                      const Icon(Icons.bolt,
+                                          size: 11, color: C.ember),
+                                      const SizedBox(width: 2),
+                                    ],
+                                    Text(shortK(l.rent),
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: t.ink)),
+                                    Text('/${perShort(l.period)}',
+                                        style: TextStyle(
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: t.ink2)),
+                                  ]),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  huntinAttribution(_onBackup),
+                ],
+              ),
+              if (_loading)
+                Positioned(
+                  top: 10,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: t.card,
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: t.line, width: 1),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(strokeWidth: 2)),
+                        const SizedBox(width: 8),
+                        Text('Placing houses on the map…',
+                            style: TextStyle(fontSize: 12, color: t.ink2)),
+                      ]),
+                    ),
+                  ),
+                ),
+              if (_loadFailed)
+                Positioned(
+                  top: 10,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _loading = true;
+                          _loadFailed = false;
+                        });
+                        _load();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: t.card,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: t.line, width: 1),
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.wifi_off, size: 13, color: t.ink2),
+                          const SizedBox(width: 7),
+                          Text('Houses failed to load — Tap to retry',
+                              style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: t.ink2)),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
+              Positioned(
+                right: 12,
+                bottom: 18,
+                child: FloatingActionButton.small(
+                  backgroundColor: t.card,
+                  foregroundColor: t.pine,
+                  heroTag: 'map-loc',
+                  onPressed: _useMyLocation,
+                  child: const Icon(Icons.my_location, size: 20),
+                ),
+              ),
+            ],
+          ),
         ),
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 8, 14, 10),

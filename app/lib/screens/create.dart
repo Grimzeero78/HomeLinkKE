@@ -10,6 +10,7 @@ import '../data.dart';
 import '../notifs.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../tiles.dart';
 import '../util.dart';
 import '../widgets.dart';
 
@@ -33,6 +34,7 @@ class _CreateScreenState extends State<CreateScreen> {
   ];
   int _step = 0;
   bool _busy = false;
+  bool _pinMapOnBackup = false; // pin picker fell back Google -> CARTO (web)
   String _error = '';
   bool _loadingExisting = false;
 
@@ -577,14 +579,11 @@ class _CreateScreenState extends State<CreateScreen> {
               onTap: (tap, p) => setState(() => _pin = p),
             ),
             children: [
-              TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.huntin.ke'),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('© OpenStreetMap contributors')
-                ],
-              ),
+              HuntinTiles(onFallback: () {
+                if (!mounted) return;
+                setState(() => _pinMapOnBackup = true);
+              }),
+              huntinAttribution(_pinMapOnBackup),
               if (_pin != null)
                 MarkerLayer(markers: [
                   Marker(

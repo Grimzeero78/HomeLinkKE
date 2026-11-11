@@ -37,6 +37,10 @@ class AppState extends ChangeNotifier {
   SharedPreferences get prefs => _prefs!;
 
   Future<void> boot() async {
+    // IDEMPOTENT: the root widget and the boot sequence may both call this —
+    // the second call must be a no-op, otherwise it rebuilds st.api and any
+    // injected/fake client (and an in-flight first boot) gets clobbered.
+    if (ready) return;
     // LOCAL loads first, then the UI shows immediately — network waits never
     // block the splash (a slow emulator sat up to 40s frozen before this fix).
     try {

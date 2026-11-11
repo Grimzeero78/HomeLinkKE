@@ -29,6 +29,7 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   int _tab = 0;
   bool _mapOpened = false;
+  bool _searchOpened = false; // tabs mount on FIRST visit, then stay alive
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _ShellState extends State<Shell> {
     if (!mounted) return;
     setState(() {
       _tab = shellTab.value;
+      if (_tab == 1) _searchOpened = true;
       if (_tab == 2) _mapOpened = true;
     });
     if (shellTab.value == 3) context.read<AppState>().resetUnreadBadge();
@@ -54,6 +56,7 @@ class _ShellState extends State<Shell> {
   void _go(int i) {
     setState(() {
       _tab = i;
+      if (i == 1) _searchOpened = true;
       if (i == 2) _mapOpened = true;
     });
     if (shellTab.value != i) shellTab.value = i;
@@ -256,7 +259,9 @@ class _ShellState extends State<Shell> {
     };
     final pages = [
       const HomeScreen(),
-      const SearchScreen(),
+      // lazy like the map: mounting search eagerly made it fetch 100 listings
+      // at every boot before the user ever opened the tab (wasted data).
+      _searchOpened ? const SearchScreen() : const SizedBox.shrink(),
       _mapOpened ? const MapScreen() : const SizedBox.shrink(),
       const ChatsScreen(),
       const ProfileScreen(),

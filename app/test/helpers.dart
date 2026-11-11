@@ -1,11 +1,41 @@
 // Test doubles shared by the widget tests.
 // FakeApi overrides every network call so tests run offline and fast.
 import 'dart:async';
+import 'dart:ui' show loadFontFromList;
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:huntin_app/api.dart';
 import 'package:huntin_app/models.dart';
 import 'package:huntin_app/state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+// The app's real fonts. Widget tests default to "Ahem", whose glyphs are full
+// squares ~3x wider than real text — that fake width invents RenderFlex
+// overflows that no real device shows (and can hide layout bugs). Load the
+// shipped TTFs once per suite so layout tests measure REAL text metrics.
+Future<void> loadRealFonts() async {
+  const families = <String, List<String>>{
+    'Instrument Sans': [
+      'assets/fonts/InstrumentSans-400.ttf',
+      'assets/fonts/InstrumentSans-500.ttf',
+      'assets/fonts/InstrumentSans-600.ttf',
+      'assets/fonts/InstrumentSans-700.ttf',
+    ],
+    'Bricolage Grotesque': [
+      'assets/fonts/BricolageGrotesque-500.ttf',
+      'assets/fonts/BricolageGrotesque-600.ttf',
+      'assets/fonts/BricolageGrotesque-700.ttf',
+      'assets/fonts/BricolageGrotesque-800.ttf',
+    ],
+  };
+  for (final e in families.entries) {
+    for (final p in e.value) {
+      final bytes = await rootBundle.load(p);
+      await loadFontFromList(bytes.buffer.asUint8List(),
+          fontFamily: e.key);
+    }
+  }
+}
 
 // 1x1 transparent PNG (the app's images are data URLs — no network needed)
 const tinyPng =

@@ -14,6 +14,7 @@ import '../data.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
+import '../tiles.dart';
 import '../util.dart';
 import '../widgets.dart';
 import 'auth.dart';
@@ -37,6 +38,7 @@ class _ListingScreenState extends State<ListingScreen> {
   List<Listing> _similar = [];
   bool _isOwner = false;
   bool _isFav = false;
+  bool _mapOnBackup = false; // mini map fell back Google -> CARTO (like web)
   int _gal = 0;
   // Drives the big photo — WITHOUT a controller the arrows and thumbs changed
   // the counter but the photo never moved (the bug the user reported).
@@ -653,13 +655,16 @@ class _ListingScreenState extends State<ListingScreen> {
             child: OutlinedButton(
           style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               textStyle: const TextStyle(fontSize: 13)),
           onPressed: _toggleFav,
           child: Row(mainAxisSize: MainAxisSize.min, children: [
             Icon(_isFav ? Icons.favorite : Icons.favorite_border,
                 size: 16, color: _isFav ? C.bad : null),
             const SizedBox(width: 6),
-            Text(_isFav ? 'Saved' : 'Save'),
+            Flexible(
+                child: Text(_isFav ? 'Saved' : 'Save',
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
           ]),
         )),
         const SizedBox(width: 8),
@@ -667,12 +672,15 @@ class _ListingScreenState extends State<ListingScreen> {
             child: OutlinedButton(
           style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               textStyle: const TextStyle(fontSize: 13)),
           onPressed: _share,
-          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          child: Row(mainAxisSize: MainAxisSize.min, children: const [
             Icon(Icons.share_outlined, size: 16),
             SizedBox(width: 6),
-            Text('Share'),
+            Flexible(
+                child: Text('Share',
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
           ]),
         )),
         const SizedBox(width: 8),
@@ -680,12 +688,15 @@ class _ListingScreenState extends State<ListingScreen> {
             child: OutlinedButton(
           style: OutlinedButton.styleFrom(
               minimumSize: const Size(0, 40),
+              padding: const EdgeInsets.symmetric(horizontal: 6),
               textStyle: const TextStyle(fontSize: 13)),
           onPressed: _report,
-          child: const Row(mainAxisSize: MainAxisSize.min, children: [
+          child: Row(mainAxisSize: MainAxisSize.min, children: const [
             Icon(Icons.flag_outlined, size: 16),
             SizedBox(width: 6),
-            Text('Report'),
+            Flexible(
+                child: Text('Report',
+                    maxLines: 1, overflow: TextOverflow.ellipsis)),
           ]),
         )),
       ]),
@@ -808,12 +819,15 @@ class _ListingScreenState extends State<ListingScreen> {
               child: ElevatedButton(
             style: ElevatedButton.styleFrom(
                 minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 textStyle: const TextStyle(fontSize: 13.5)),
             onPressed: canContact ? call : needAuth,
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            child: Row(mainAxisSize: MainAxisSize.min, children: const [
               Icon(Icons.call_outlined, size: 17),
               SizedBox(width: 6),
-              Text('Call'),
+              Flexible(
+                  child: Text('Call',
+                      maxLines: 1, overflow: TextOverflow.ellipsis)),
             ]),
           )),
           const SizedBox(width: 8),
@@ -821,12 +835,15 @@ class _ListingScreenState extends State<ListingScreen> {
               child: FilledButton(
             style: FilledButton.styleFrom(
                 minimumSize: const Size(0, 44),
+                padding: const EdgeInsets.symmetric(horizontal: 6),
                 textStyle: const TextStyle(fontSize: 13.5)),
             onPressed: canContact ? whatsapp : needAuth,
-            child: const Row(mainAxisSize: MainAxisSize.min, children: [
+            child: Row(mainAxisSize: MainAxisSize.min, children: const [
               Icon(Icons.chat_outlined, size: 17),
               SizedBox(width: 6),
-              Text('WhatsApp'),
+              Flexible(
+                  child: Text('WhatsApp',
+                      maxLines: 1, overflow: TextOverflow.ellipsis)),
             ]),
           )),
         ]),
@@ -953,9 +970,8 @@ class _ListingScreenState extends State<ListingScreen> {
           'The landlord has not pinned this property on the map yet. Ask for directions in the chat.',
           style: TextStyle(fontSize: 13, color: t.ink2, height: 1.5));
     }
-    // CARTO Voyager gives the embedded map a working, consistent tile source.
-    const tileCarto =
-        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+    // THE WEBSITE TILE ENGINE (maps.js): Google roads first, CARTO Voyager
+    // backup — no API key, exactly what the website draws.
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       ClipRRect(
         borderRadius: BorderRadius.circular(12),
@@ -975,11 +991,11 @@ class _ListingScreenState extends State<ListingScreen> {
               onTap: (_, __) => _pinPopup(context, l),
             ),
             children: [
-              TileLayer(
-                urlTemplate: tileCarto,
-                subdomains: const ['a', 'b', 'c', 'd'],
-                maxNativeZoom: 20,
-                userAgentPackageName: 'com.huntin.ke',
+              HuntinTiles(
+                onFallback: () {
+                  if (!mounted) return;
+                  setState(() => _mapOnBackup = true);
+                },
               ),
               MarkerLayer(markers: [
                 Marker(
@@ -991,11 +1007,7 @@ class _ListingScreenState extends State<ListingScreen> {
                       child: const _RedPin()),
                 ),
               ]),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('© OpenStreetMap contributors © CARTO')
-                ],
-              ),
+              huntinAttribution(_mapOnBackup),
             ],
           ),
         ),

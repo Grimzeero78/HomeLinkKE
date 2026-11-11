@@ -30,6 +30,7 @@ void main() {
     expect(find.text('Chats'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
     expect(api.listingsFetches, 1,
-        reason: 'the map must not fetch listings before its tab is opened');
+        reason: 'home warms its list at boot — but only home: the map/search '
+            'tabs fetch when opened, boot does not burn extra data');
   });
 }
