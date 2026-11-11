@@ -8,11 +8,10 @@ import 'dart:convert';
 import 'dart:io' show HttpClient;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart' as ll;
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../data.dart';
+import '../loc.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -37,6 +36,15 @@ class _MapScreenState extends State<MapScreen> {
   String _rad = '';
   ll.LatLng? _center;                 // filter centre (GPS or searched place)
   final Map<int, double> _dist = {};
+
+  // Tile sources — the SAME two the website uses (public/js/maps.js):
+  // Google roads first, silent swap to CARTO Voyager when tiles keep failing
+  // (this is what made the map blank before: it used a third, stricter source).
+  static const _tileGoogle = 'https://mt{s}.google.com/vt/lyrs=m&hl=en&x={x}&y={y}&z={z}&s=Ga';
+  static const _tileCarto = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png';
+  bool _carto = false;
+  int _tileErrs = 0;
+  int _tileWinMs = 0;
 
   @override
   void initState() {
@@ -100,27 +108,19 @@ class _MapScreenState extends State<MapScreen> {
   }
 
   Future<void> _useMyLocation() async {
-    final status = await Permission.locationWhenInUse.request();
-    if (!status.isGranted) {
-      if (mounted) snack(context, 'Location permission denied', error: true);
-      return;
+    snack(context, 'Getting your location…');
+    final p = await huntinGetLocation(context);
+    if (p == null || !mounted) return;
+    final st = context.read<AppState>();
+    await st.setMyPos(p.latitude, p.longitude);
+    final near = nearestTown(p.latitude, p.longitude);
+    if (near != null && distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
+      await st.setMyTown(near.n);
     }
-    try {
-      final p = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium, timeLimit: const Duration(seconds: 15));
-      final st = context.read<AppState>();
-      await st.setMyPos(p.latitude, p.longitude);
-      final near = nearestTown(p.latitude, p.longitude);
-      if (near != null && distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
-        await st.setMyTown(near.n);
-      }
-      _center = ll.LatLng(p.latitude, p.longitude);
-      _applyFilter();
-      try { _map.move(_center!, 15); } catch (_) {}
-      if (mounted) setState(() {});
-    } catch (_) {
-      if (mounted) snack(context, 'Could not get your location', error: true);
-    }
+    _center = ll.LatLng(p.latitude, p.longitude);
+    _applyFilter();
+    try { _map.move(_center!, 15); } catch (_) {}
+    if (mounted) setState(() {});
   }
 
   Future<void> _doSearch() async {
@@ -330,8 +330,22 @@ class _MapScreenState extends State<MapScreen> {
                     ),
                     children: [
                       TileLayer(
-                        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        userAgentPackageName: 'ke.huntin.app',
+                        urlTemplate: _carto ? _tileCarto : _tileGoogle,
+                        subdomains: _carto ? const ['a', 'b', 'c', 'd'] : const ['0', '1', '2', '3'],
+                        maxNativeZoom: 20,
+                        userAgentPackageName: 'com.huntin.ke',
+                        errorTileCallback: (_, __, ___) {
+                          if (_carto || !mounted) return;
+                          final now = DateTime.now().millisecondsSinceEpoch;
+                          if (_tileWinMs == 0 || now - _tileWinMs > 25000) {
+                            _tileErrs = 1; _tileWinMs = now; return;
+                          }
+                          _tileErrs++;
+                          if (_tileErrs >= 8) {
+                            _carto = true;
+                            setState(() {}); // swap to the backup map, same as the website
+                          }
+                        },
                       ),
                       MarkerLayer(
                         markers: [

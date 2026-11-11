@@ -2,10 +2,9 @@
 // town chips, "Houses near you" (GPS, 7 km rule), "Boosted in <town>", "Newest in Kenya",
 // how-it-works and the never-pay safety notice.
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../data.dart';
+import '../loc.dart';
 import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -59,26 +58,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _useMyLocation() async {
-    var status = await Permission.locationWhenInUse.request();
-    if (!status.isGranted) {
-      if (mounted) snack(context, 'Location permission denied — choose your town below instead', error: true);
-      return;
+    snack(context, 'Getting your location…');
+    final p = await huntinGetLocation(context);
+    if (p == null || !mounted) return;
+    final st = context.read<AppState>();
+    await st.setMyPos(p.latitude, p.longitude);
+    final near = nearestTown(p.latitude, p.longitude);
+    if (near != null && distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
+      await st.setMyTown(near.n); // GPS says which town you are in
     }
-    if (mounted) snack(context, 'Getting your location…');
-    try {
-      final p = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium, timeLimit: const Duration(seconds: 15));
-      final st = context.read<AppState>();
-      await st.setMyPos(p.latitude, p.longitude);
-      final near = nearestTown(p.latitude, p.longitude);
-      if (near != null && distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
-        await st.setMyTown(near.n); // GPS says which town you are in
-      }
-      _askedGps = true;
-      _load();
-    } catch (_) {
-      if (mounted) snack(context, 'Could not get your location — pick your town instead', error: true);
-    }
+    _askedGps = true;
+    _load();
   }
 
   void _openSearch({String? town, String? q}) {
@@ -243,10 +233,11 @@ class _HomeScreenState extends State<HomeScreen> {
               for (final tw in TOWNS.where((x) => x.big))
                 ActionChip(
                   label: Text(tw.n, style: TextStyle(
-                      fontSize: 12.5, fontWeight: FontWeight.w600,
-                      color: tw.n == myTown ? T(Theme.of(context).brightness).heroBottom : const Color(0xFFEAF4EC))),
-                  backgroundColor: tw.n == myTown ? Colors.white : Colors.white.withValues(alpha: .12),
-                  side: BorderSide(color: tw.n == myTown ? Colors.white : Colors.white.withValues(alpha: .22)),
+                      fontSize: 13, fontWeight: tw.n == myTown ? FontWeight.w800 : FontWeight.w700,
+                      color: tw.n == myTown ? C.pineDeep : Colors.white)),
+                  backgroundColor: tw.n == myTown ? Colors.white : Colors.white.withValues(alpha: .16),
+                  side: BorderSide(color: Colors.white.withValues(alpha: tw.n == myTown ? .95 : .45), width: 1.2),
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                   onPressed: () => _openSearch(town: tw.n),
                 ),
             ],
@@ -402,7 +393,7 @@ class _SkelGrid extends StatelessWidget {
       final cols = c.maxWidth >= 620 ? 3 : 2;
       return GridView.count(
         crossAxisCount: cols, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.72,
+        mainAxisSpacing: 12, crossAxisSpacing: 12, childAspectRatio: 0.64,
         children: List.generate(cols * 2, (_) => const Skel()),
       );
     });
