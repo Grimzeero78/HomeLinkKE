@@ -1,11 +1,9 @@
 // HuntInKE — one shared "use my location" flow for Home and Map.
 // Handles the full journey the same way on every device:
 //   1. asks the permission (and opens App Settings if it was permanently blocked)
-//   2. if GPS service is OFF: opens the settings switch and AUTO-CONTINUES the
-//      moment the user turns it on — no need to press the button again
-//   3. shows a progress dialog the whole time (no silent waits, no double-taps)
-//   4. fix chain: last known → fresh medium (18s) → fresh low (12s, network —
-//      this is the one that usually locks on emulators) → clear error message
+//   2. if GPS service is OFF: opens settings and asks the user to retry after
+//      turning it on (never leaves the app polling settings for 45 seconds)
+//   3. returns a fresh fix quickly or shows a clear retry message
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -16,9 +14,11 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
   // Use one permission API for both the permission prompt and position lookup.
   LocationPermission permission;
   try {
-    permission = await Geolocator.checkPermission();
+    permission =
+        await Geolocator.checkPermission().timeout(const Duration(seconds: 5));
     if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+      permission = await Geolocator.requestPermission()
+          .timeout(const Duration(seconds: 30));
     }
   } catch (e) {
     if (context.mounted) {
@@ -32,7 +32,8 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
           'Location is blocked — allow it in Settings, then press again',
           error: true);
       try {
-        final opened = await Geolocator.openAppSettings();
+        final opened = await Geolocator.openAppSettings()
+            .timeout(const Duration(seconds: 5));
         if (!opened && context.mounted) {
           snack(context, 'Could not open app settings', error: true);
         }
@@ -53,10 +54,11 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
     return null;
   }
 
-  // 2) GPS service off → open the switch, keep watching, continue automatically
+  // 2) GPS off → open settings and ask the user to retry after enabling it.
   bool serviceEnabled;
   try {
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    serviceEnabled = await Geolocator.isLocationServiceEnabled()
+        .timeout(const Duration(seconds: 5));
   } catch (e) {
     if (context.mounted) {
       snack(context, 'Could not check location services: $e', error: true);
@@ -64,14 +66,14 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
     return null;
   }
   if (!serviceEnabled) {
-    if (context.mounted) {
-      snack(context, 'Turn location ON — the app continues by itself');
-    }
     try {
-      final opened = await Geolocator.openLocationSettings();
+      final opened = await Geolocator.openLocationSettings()
+          .timeout(const Duration(seconds: 5));
       if (!opened) {
         if (context.mounted) {
-          snack(context, 'Could not open location settings', error: true);
+          snack(context,
+              'Location is off — turn it on in Settings, then try again',
+              error: true);
         }
         return null;
       }
@@ -81,28 +83,11 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
       }
       return null;
     }
-    final started = DateTime.now();
-    while (DateTime.now().difference(started) < const Duration(seconds: 45)) {
-      await Future.delayed(const Duration(milliseconds: 1200));
-      try {
-        if (await Geolocator.isLocationServiceEnabled()) {
-          serviceEnabled = true;
-          break;
-        }
-      } catch (e) {
-        if (context.mounted) {
-          snack(context, 'Could not check location services: $e', error: true);
-        }
-        return null;
-      }
+    if (context.mounted) {
+      snack(context,
+          'Turn on Location in Settings, then tap “Use my location” again');
     }
-    if (!serviceEnabled) {
-      if (context.mounted) {
-        snack(context, 'Location is still off — pick your town instead',
-            error: true);
-      }
-      return null;
-    }
+    return null;
   }
 
   // 3) progress dialog while we hunt for a fix — the user always sees state
@@ -133,43 +118,43 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
 
   Position? fix;
   try {
-    // A cached fix can be HOURS old (or an emulator's default position from
-    // when the AVD was created) — trusting it blindly is what put people in
-    // the wrong town and said "no houses near you" for a hostel 200 m away.
-    // So: use the cache only if it is fresh; otherwise hunt a fresh fix and
-    // keep the stale cache only as the very last resort.
+    // A cached fix is useful only when recent; stale emulator/device positions
+    // must not silently send renters to the wrong town.
     Position? last;
     try {
-      last = await Geolocator.getLastKnownPosition();
+      last = await Geolocator.getLastKnownPosition()
+          .timeout(const Duration(seconds: 1));
     } catch (_) {}
-    if (_freshEnough(last, const Duration(minutes: 10))) fix = last;
-    fix ??= await _fresh(LocationAccuracy.medium, const Duration(seconds: 18));
-    fix ??= await _fresh(
-        LocationAccuracy.low,
-        const Duration(
-            seconds: 12)); // network — the one that usually locks on emulators
-    fix ??= await _fresh(LocationAccuracy.high, const Duration(seconds: 20));
-    fix ??= last; // stale but better than nothing
+    if (_freshEnough(last, const Duration(minutes: 2))) {
+      fix = last;
+    } else {
+      fix = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      ).timeout(const Duration(seconds: 12));
+    }
+  } on TimeoutException {
+    if (context.mounted) {
+      snack(context,
+          'Could not get your location in time. Check that Location is on, then try again.',
+          error: true);
+    }
+    return null;
+  } catch (e) {
+    if (context.mounted) {
+      snack(context, 'Could not get your location: $e', error: true);
+    }
+    return null;
   } finally {
     if (dialogRoute.isActive) nav.removeRoute(dialogRoute);
   }
 
   if (fix != null) return fix;
   if (context.mounted) {
-    snack(context,
-        'No GPS fix yet — press again. On a phone: go outside and retry. On an emulator: Extended Controls (⋮) → Location → set a point → Set Location.',
+    snack(context, 'No location fix yet — check Location is on and try again.',
         error: true);
   }
   return null;
-}
-
-Future<Position?> _fresh(LocationAccuracy acc, Duration limit) async {
-  try {
-    return await Geolocator.getCurrentPosition(
-        desiredAccuracy: acc, timeLimit: limit);
-  } catch (_) {
-    return null; // timeout / provider error — try the next chain step
-  }
 }
 
 bool _freshEnough(Position? p, Duration maxAge) {

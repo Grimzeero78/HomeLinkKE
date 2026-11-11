@@ -24,6 +24,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _loading = true;
+  bool _gettingLocation = false;
   String _error = '';
   List<Listing> _items = [];
   final Map<int, double> _dist = {};
@@ -70,17 +71,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _useMyLocation() async {
-    snack(context, 'Getting your location…');
-    final p = await huntinGetLocation(context);
-    if (p == null || !mounted) return;
-    final st = context.read<AppState>();
-    await st.setMyPos(p.latitude, p.longitude);
-    final near = nearestTown(p.latitude, p.longitude);
-    if (near != null &&
-        distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
-      await st.setMyTown(near.n); // GPS says which town you are in
+    if (_gettingLocation) return;
+    setState(() => _gettingLocation = true);
+    try {
+      final p = await huntinGetLocation(context);
+      if (p == null || !mounted) return;
+      final st = context.read<AppState>();
+      await st.setMyPos(p.latitude, p.longitude);
+      final near = nearestTown(p.latitude, p.longitude);
+      if (near != null &&
+          distMeters(p.latitude, p.longitude, near.lat, near.lng) < 60000) {
+        await st.setMyTown(near.n); // GPS says which town you are in
+      }
+      _load();
+    } finally {
+      if (mounted) setState(() => _gettingLocation = false);
     }
-    _load();
   }
 
   void _openSearch({String? town, String? q}) {
@@ -310,11 +316,18 @@ class _HomeScreenState extends State<HomeScreen> {
           style: FilledButton.styleFrom(
               minimumSize: const Size(0, 42),
               padding: const EdgeInsets.symmetric(horizontal: 14)),
-          onPressed: _useMyLocation,
-          child: const Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(Icons.location_on_outlined, size: 17),
-            SizedBox(width: 6),
-            Text('Use my location'),
+          onPressed: _gettingLocation ? null : _useMyLocation,
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            if (_gettingLocation)
+              const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            else
+              const Icon(Icons.location_on_outlined, size: 17),
+            const SizedBox(width: 6),
+            Text(_gettingLocation ? 'Getting location…' : 'Use my location'),
           ]),
         ),
       ),
