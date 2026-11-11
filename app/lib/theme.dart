@@ -214,7 +214,6 @@ ThemeData huntinTheme(Brightness b) {
           (s) => s.contains(WidgetState.selected) ? t.pine : t.soft2),
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(color: t.pine, linearTrackColor: t.soft),
-    refreshIndicatorTheme: const RefreshIndicatorThemeData(color: C.ember),
   );
 }
 
@@ -224,5 +223,4 @@ ChipThemeData baseChip(ColorScheme scheme, T t) => ChipThemeData(
       shape: const StadiumBorder(),
       labelStyle: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: t.ink2),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-      visualDensity: VisualDensity.compact,
     );

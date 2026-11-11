@@ -3,7 +3,6 @@
 // actions and the pending counts badge.
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../models.dart';
 import '../state.dart';
 import '../theme.dart';
 import '../util.dart';
@@ -19,7 +18,6 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
   late final TabController _tabs = TabController(length: 5, vsync: this);
   bool _loading = true;
   String _error = '';
-  Map<String, dynamic>? _stats;
   List<dynamic> _verifs = [], _boosts = [], _reports = [], _listings = [], _users = [];
 
   @override
@@ -39,8 +37,6 @@ class _AdminScreenState extends State<AdminScreen> with SingleTickerProviderStat
     final st = context.read<AppState>();
     setState(() { _loading = true; _error = ''; });
     try {
-      final stats = await st.api.adminStats();
-      _stats = (stats['stats'] ?? {}) as Map<String, dynamic>;
       _verifs = await _safe(() => st.api.adminVerifications());
       _boosts = await _safe(() => st.api.adminBoosts());
       _reports = await _safe(() => st.api.adminReports());

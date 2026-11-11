@@ -2,7 +2,6 @@
 // vacancy badges, amenity tags, empty boxes, section headers, kv rows, settings rows.
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'data.dart';
 import 'models.dart';
 import 'theme.dart';
 import 'util.dart';

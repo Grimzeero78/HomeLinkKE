@@ -7,7 +7,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart' as ll;
 import 'package:provider/provider.dart';
 import '../data.dart';
-import '../models.dart';
 import '../notifs.dart';
 import '../state.dart';
 import '../theme.dart';
@@ -163,7 +162,7 @@ class _CreateScreenState extends State<CreateScreen> {
         snack(context, 'Listing updated');
         Notifs.showAccount('Listing updated', '"${L['title']}" was saved successfully.');
       } else {
-        final r = await st.api.createListing(L);
+        await st.api.createListing(L);
         if (!mounted) return;
         snack(context, 'Listing posted!');
         Notifs.showAccount('Listing posted', '"${L['title']}" is now live. Boost it for KES $BOOST_AMOUNT_KES to get seen first.');
@@ -305,7 +304,7 @@ class _CreateScreenState extends State<CreateScreen> {
     }
   }
 
-  Widget _lbl(BuildContext context, String s, {String? hint}) {
+  Widget _lbl(BuildContext context, String s, [String? hint]) {
     final t = T(Theme.of(context).brightness);
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 13, 0, 6),

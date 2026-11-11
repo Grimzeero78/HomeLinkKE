@@ -26,26 +26,25 @@ you get with one pull.
 - File → Open Folder → inside the cloned `HomeLinkKE` folder, select the
   folder called **`app`** → Open
 
-**3. In the terminal (`Ctrl+`` ` ``) run these 3 commands, one by one:**
+**3. In the terminal (`Ctrl+`` ` ``) run these 2 commands, one by one:**
 
 ```
-flutter create --platforms=android,ios --org com.huntin --project-name ke .
 flutter pub get
-flutter build apk --release
+flutter build apk --split-per-abi
 ```
 
-The first command rebuilds the android phone parts (permissions, icon and
-splash come from this repo; the build files are made on your machine).
-**First build takes 5–15 minutes** (downloads Android tools) — needs internet,
-don't close the terminal.
+The Android project files are included in this repo. **First build takes
+5–15 minutes** (downloads Android tools) — needs internet, don't close the terminal.
 
 **4. Your APK:**
 
 ```
-build\app\outputs\flutter-apk\app-release.apk
+build\app\outputs\flutter-apk\app-arm64-v8a-release.apk
 ```
 
-Copy it to your phone → tap it → allow "install unknown apps" → done.
+Copy the `app-arm64-v8a-release.apk` to a modern Android phone → tap it →
+allow "install unknown apps" → done. Separate APKs for other processor types
+are in the same folder.
 
 ---
 

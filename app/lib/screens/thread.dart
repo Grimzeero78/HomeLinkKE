@@ -12,6 +12,7 @@ import '../state.dart';
 import '../theme.dart';
 import '../util.dart';
 import '../widgets.dart';
+import 'listing.dart';
 
 class ThreadScreen extends StatefulWidget {
   final int convId;
@@ -26,7 +27,6 @@ class _ThreadScreenState extends State<ThreadScreen> {
   final _focus = FocusNode();
   bool _loading = true;
   String _error = '';
-  Map<String, dynamic>? _info;
   Listing? _listing;
   Map<String, dynamic>? _other;
   final List<Msg> _msgs = [];
@@ -57,7 +57,6 @@ class _ThreadScreenState extends State<ThreadScreen> {
     try {
       final info = await st.api.conv(widget.convId);
       if (!mounted) return;
-      _info = info;
       _listing = Listing.fromJson(((info['listing'] ?? {}) as Map).cast<String, dynamic>());
       _other = (info['other'] ?? {}) as Map<String, dynamic>;
       setState(() => _loading = false);

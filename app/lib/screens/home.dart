@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (mounted) snack(context, 'Getting your location…');
     try {
       final p = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 15)));
+          desiredAccuracy: LocationAccuracy.medium, timeLimit: const Duration(seconds: 15));
       final st = context.read<AppState>();
       await st.setMyPos(p.latitude, p.longitude);
       final near = nearestTown(p.latitude, p.longitude);
@@ -194,13 +194,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
-
-  void _openListing(Listing l) {
-    Navigator.push(context, MaterialPageRoute(builder: (_) => ListingScreen(l.id)))
-        .then((_) => _load());
-  }
-
-
 
   // ---- hero ----
   Widget _hero(BuildContext context, String myTown) {

@@ -26,15 +26,5 @@ linux/
 windows/
 web/
 
-# Generated on YOUR machine by "flutter create" (kept out of git so pulls stay clean)
-.metadata
+# Resolve application dependencies with "flutter pub get" after cloning.
 pubspec.lock
-android/build.gradle
-android/settings.gradle
-android/gradle.properties
-android/gradle/
-android/gradlew
-android/gradlew.bat
-android/app/build.gradle
-android/app/build.gradle.kts
-android/app/src/main/kotlin/

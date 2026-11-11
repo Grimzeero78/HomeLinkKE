@@ -107,7 +107,7 @@ class _MapScreenState extends State<MapScreen> {
     }
     try {
       final p = await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.medium, timeLimit: Duration(seconds: 15)));
+          desiredAccuracy: LocationAccuracy.medium, timeLimit: const Duration(seconds: 15));
       final st = context.read<AppState>();
       await st.setMyPos(p.latitude, p.longitude);
       final near = nearestTown(p.latitude, p.longitude);

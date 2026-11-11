@@ -17,7 +17,7 @@ import '../util.dart';
 import '../widgets.dart';
 import 'auth.dart';
 import 'boost.dart';
-import 'chats.dart';
+import 'thread.dart';
 import 'welcome.dart';
 
 class ListingScreen extends StatefulWidget {
@@ -198,9 +198,9 @@ class _ListingScreenState extends State<ListingScreen> {
                   style: TextStyle(fontSize: 13.2, fontWeight: FontWeight.w600, color: C.emberDeep, height: 1.5),
                   children: [
                     const TextSpan(text: 'This is your listing. ', style: TextStyle(fontWeight: FontWeight.w800)),
-                    const TextSpan(text: 'Get seen first in ${l.town.isEmpty ? 'your town' : l.town} — '),
+                    TextSpan(text: 'Get seen first in ${l.town.isEmpty ? 'your town' : l.town} — '),
                     TextSpan(text: 'Boost it for KES $BOOST_AMOUNT_KES / $BOOST_DAYS days', style: const TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.w800)),
-                    const TextSpan(text: '. Renters browsing ${l.town.isEmpty ? 'your town' : l.town} will see it on top.'),
+                    TextSpan(text: '. Renters browsing ${l.town.isEmpty ? 'your town' : l.town} will see it on top.'),
                   ])),
                 ),
               ),
@@ -223,7 +223,7 @@ class _ListingScreenState extends State<ListingScreen> {
             _gallery(context),
             const SizedBox(height: 10),
           ],
-          _head(context, l, dist),
+          _head(context, l, dist, verified),
           const SizedBox(height: 14),
           _ownerCard(context, l, canContact, contactNum),
           const SizedBox(height: 2),
@@ -311,7 +311,7 @@ class _ListingScreenState extends State<ListingScreen> {
   }
 
   // ---- head: price, title, pills, actions ----
-  Widget _head(BuildContext context, Listing l, String dist) {
+  Widget _head(BuildContext context, Listing l, String dist, bool verified) {
     final t = T(Theme.of(context).brightness);
     final period = l.period.startsWith('Per Month') ? 'month' : 'semester';
     final loc = [l.town.isEmpty ? 'Kenya' : l.town, if (l.area.isNotEmpty) l.area, if (l.landmark.isNotEmpty) l.landmark].join(' · ');
@@ -630,6 +630,7 @@ class _ListingScreenState extends State<ListingScreen> {
   }
 
   Widget _pricing(BuildContext context, Listing l) {
+    final t = T(Theme.of(context).brightness);
     final r = l.raw;
     final rows = <String, String>{
       'Rent': '${kes(l.rent)} / ${(l.period).toLowerCase()}',
