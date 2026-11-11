@@ -3,7 +3,14 @@
 //   1. asks the permission (and opens App Settings if it was permanently blocked)
 //   2. if GPS service is OFF: opens settings and asks the user to retry after
 //      turning it on (never leaves the app polling settings for 45 seconds)
-//   3. returns a fresh fix quickly or shows a clear retry message
+//   3. gets a position the same way the website/browser does — this is the
+//      fix for "web works instantly, app says can't get it":
+//        a. cached fix up to 2 min old (browser maximumAge: 120000)
+//        b. NETWORK fix (WiFi + cell towers, LocationAccuracy.medium) — this is
+//           what Chrome really uses; it answers in 1-5 s indoors, no GPS needed
+//        c. only if still nothing: GPS satellite fix (high accuracy, 10 s)
+//      The old code asked GPS FIRST with a 10 s limit — indoors that always
+//      timed out, which is why the app failed while the site worked.
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -118,8 +125,8 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
 
   Position? fix;
   try {
-    // A cached fix is useful only when recent; stale emulator/device positions
-    // must not silently send renters to the wrong town.
+    // a) A cached fix is useful only when recent; stale emulator/device
+    //    positions must not silently send renters to the wrong town.
     Position? last;
     try {
       last = await Geolocator.getLastKnownPosition()
@@ -127,12 +134,11 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
     } catch (_) {}
     if (_freshEnough(last, const Duration(minutes: 2))) {
       fix = last;
-    } else {
-      fix = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-        timeLimit: const Duration(seconds: 10),
-      ).timeout(const Duration(seconds: 12));
     }
+    // b) Network fix (WiFi/cell) — the browser-parity source. Fast indoors.
+    fix ??= await _tryFix(LocationAccuracy.medium, const Duration(seconds: 6));
+    // c) GPS satellite fix — only when the network could not place us.
+    fix ??= await _tryFix(LocationAccuracy.high, const Duration(seconds: 10));
   } on TimeoutException {
     if (context.mounted) {
       snack(context,
@@ -155,6 +161,17 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
         error: true);
   }
   return null;
+}
+
+Future<Position?> _tryFix(LocationAccuracy acc, Duration limit) async {
+  try {
+    return await Geolocator.getCurrentPosition(
+      desiredAccuracy: acc,
+      timeLimit: limit,
+    ).timeout(limit + const Duration(seconds: 2));
+  } catch (_) {
+    return null; // tier failed — the caller moves to the next tier
+  }
 }
 
 bool _freshEnough(Position? p, Duration maxAge) {
