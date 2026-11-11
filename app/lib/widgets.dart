@@ -232,7 +232,9 @@ class ListingGrid extends StatelessWidget {
         padding: EdgeInsets.zero,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: cols, mainAxisSpacing: 12, crossAxisSpacing: 12,
-          childAspectRatio: 0.72,
+          // 0.72 left the text block ~19px too tall on Pixel screens
+          // (yellow/black "bottom overflowed by 19 px" stripe) — 0.64 fits.
+          childAspectRatio: 0.64,
         ),
         itemCount: items.length,
         itemBuilder: (context, i) => ListingCard(items[i],
