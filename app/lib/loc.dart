@@ -9,62 +9,127 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
 Future<Position?> huntinGetLocation(BuildContext context) async {
-  // 1) permission
-  final status = await Permission.locationWhenInUse.request();
-  if (status.isPermanentlyDenied) {
+  // Use one permission API for both the permission prompt and position lookup.
+  LocationPermission permission;
+  try {
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+  } catch (e) {
     if (context.mounted) {
-      snack(context, 'Location is blocked — allow it in Settings, then press again', error: true);
-      try { await Geolocator.openAppSettings(); } catch (_) {}
+      snack(context, 'Could not request location permission: $e', error: true);
     }
     return null;
   }
-  if (!status.isGranted) {
-    if (context.mounted) snack(context, 'Location permission denied — pick your town instead', error: true);
+  if (permission == LocationPermission.deniedForever) {
+    if (context.mounted) {
+      snack(context,
+          'Location is blocked — allow it in Settings, then press again',
+          error: true);
+      try {
+        final opened = await Geolocator.openAppSettings();
+        if (!opened && context.mounted) {
+          snack(context, 'Could not open app settings', error: true);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          snack(context, 'Could not open app settings: $e', error: true);
+        }
+      }
+    }
     return null;
   }
-
-  Future<bool> servicesOn() async {
-    try { return await Geolocator.isLocationServiceEnabled(); } catch (_) { return false; }
+  if (permission != LocationPermission.whileInUse &&
+      permission != LocationPermission.always) {
+    if (context.mounted) {
+      snack(context, 'Location permission denied — pick your town instead',
+          error: true);
+    }
+    return null;
   }
 
   // 2) GPS service off → open the switch, keep watching, continue automatically
-  if (!await servicesOn()) {
-    if (context.mounted) snack(context, 'Turn location ON — the app continues by itself');
-    try { await Geolocator.openLocationSettings(); } catch (_) {}
+  bool serviceEnabled;
+  try {
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  } catch (e) {
+    if (context.mounted) {
+      snack(context, 'Could not check location services: $e', error: true);
+    }
+    return null;
+  }
+  if (!serviceEnabled) {
+    if (context.mounted) {
+      snack(context, 'Turn location ON — the app continues by itself');
+    }
+    try {
+      final opened = await Geolocator.openLocationSettings();
+      if (!opened) {
+        if (context.mounted) {
+          snack(context, 'Could not open location settings', error: true);
+        }
+        return null;
+      }
+    } catch (e) {
+      if (context.mounted) {
+        snack(context, 'Could not open location settings: $e', error: true);
+      }
+      return null;
+    }
     final started = DateTime.now();
     while (DateTime.now().difference(started) < const Duration(seconds: 45)) {
       await Future.delayed(const Duration(milliseconds: 1200));
-      if (await servicesOn()) break;
+      try {
+        if (await Geolocator.isLocationServiceEnabled()) {
+          serviceEnabled = true;
+          break;
+        }
+      } catch (e) {
+        if (context.mounted) {
+          snack(context, 'Could not check location services: $e', error: true);
+        }
+        return null;
+      }
     }
-    if (!await servicesOn()) {
-      if (context.mounted) snack(context, 'Location is still off — pick your town instead', error: true);
+    if (!serviceEnabled) {
+      if (context.mounted) {
+        snack(context, 'Location is still off — pick your town instead',
+            error: true);
+      }
       return null;
     }
   }
 
   // 3) progress dialog while we hunt for a fix — the user always sees state
   final nav = Navigator.of(context, rootNavigator: true);
-  unawaited(showDialog(
+  final dialogRoute = DialogRoute<void>(
     context: context,
     barrierDismissible: false,
     builder: (ctx) => PopScope(
       canPop: false,
       child: AlertDialog(
         content: Row(mainAxisSize: MainAxisSize.min, children: [
-          const SizedBox(width: 22, height: 22,
+          const SizedBox(
+              width: 22,
+              height: 22,
               child: CircularProgressIndicator(strokeWidth: 2.6)),
           const SizedBox(width: 16),
-          Expanded(child: Text('Getting your location…',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: T(Theme.of(ctx).brightness).ink))),
+          Expanded(
+              child: Text('Getting your location…',
+                  style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: T(Theme.of(ctx).brightness).ink))),
         ]),
       ),
     ),
-  ));
+  );
+  unawaited(nav.push(dialogRoute));
 
   Position? fix;
   try {
@@ -74,14 +139,19 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
     // So: use the cache only if it is fresh; otherwise hunt a fresh fix and
     // keep the stale cache only as the very last resort.
     Position? last;
-    try { last = await Geolocator.getLastKnownPosition(); } catch (_) {}
+    try {
+      last = await Geolocator.getLastKnownPosition();
+    } catch (_) {}
     if (_freshEnough(last, const Duration(minutes: 10))) fix = last;
     fix ??= await _fresh(LocationAccuracy.medium, const Duration(seconds: 18));
-    fix ??= await _fresh(LocationAccuracy.low, const Duration(seconds: 12)); // network — the one that usually locks on emulators
+    fix ??= await _fresh(
+        LocationAccuracy.low,
+        const Duration(
+            seconds: 12)); // network — the one that usually locks on emulators
     fix ??= await _fresh(LocationAccuracy.high, const Duration(seconds: 20));
     fix ??= last; // stale but better than nothing
   } finally {
-    try { if (nav.canPop()) nav.pop(); } catch (_) {}
+    if (dialogRoute.isActive) nav.removeRoute(dialogRoute);
   }
 
   if (fix != null) return fix;
@@ -95,7 +165,8 @@ Future<Position?> huntinGetLocation(BuildContext context) async {
 
 Future<Position?> _fresh(LocationAccuracy acc, Duration limit) async {
   try {
-    return await Geolocator.getCurrentPosition(desiredAccuracy: acc, timeLimit: limit);
+    return await Geolocator.getCurrentPosition(
+        desiredAccuracy: acc, timeLimit: limit);
   } catch (_) {
     return null; // timeout / provider error — try the next chain step
   }
@@ -103,5 +174,9 @@ Future<Position?> _fresh(LocationAccuracy acc, Duration limit) async {
 
 bool _freshEnough(Position? p, Duration maxAge) {
   if (p == null) return false;
-  try { return DateTime.now().difference(p.timestamp) <= maxAge; } catch (_) { return false; }
+  try {
+    return DateTime.now().difference(p.timestamp) <= maxAge;
+  } catch (_) {
+    return false;
+  }
 }

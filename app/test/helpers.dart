@@ -11,7 +11,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 const tinyPng =
     'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
-Map<String, dynamic> listingJson(int id, {double? lat, double? lng, String town = 'Nairobi', String title = 'Cosy hostel near campus'}) => {
+Map<String, dynamic> listingJson(int id,
+        {double? lat,
+        double? lng,
+        String town = 'Nairobi',
+        String title = 'Cosy hostel near campus'}) =>
+    {
       'id': id,
       'title': title,
       'ptype': 'Bedsitter',
@@ -39,8 +44,10 @@ class FakeApi extends Api {
   final Map<int, Map<String, dynamic>> listingsById;
   final List<Map<String, dynamic>> allListings;
   int listingFetches = 0;
+  int listingsFetches = 0;
 
-  FakeApi({Map<int, Map<String, dynamic>>? byId, List<Map<String, dynamic>>? all})
+  FakeApi(
+      {Map<int, Map<String, dynamic>>? byId, List<Map<String, dynamic>>? all})
       : listingsById = byId ?? {},
         allListings = all ?? [],
         super(null);
@@ -53,15 +60,29 @@ class FakeApi extends Api {
     return {
       'ok': true,
       'listing': l,
-      'photos': [for (var i = 0; i < 3; i++) {'id': i, 'idx': i, 'url': tinyPng, 'thumb': tinyPng}],
+      'photos': [
+        for (var i = 0; i < 3; i++)
+          {'id': i, 'idx': i, 'url': tinyPng, 'thumb': tinyPng}
+      ],
       'similar': [],
       'isOwner': false,
     };
   }
 
   @override
-  Future<List<dynamic>> listings({String? q, String? town, String? area, String? ptype,
-      String? furnishing, num? min, num? max, String? amenities, String? sort, String? bt, int limit = 60}) async {
+  Future<List<dynamic>> listings(
+      {String? q,
+      String? town,
+      String? area,
+      String? ptype,
+      String? furnishing,
+      num? min,
+      num? max,
+      String? amenities,
+      String? sort,
+      String? bt,
+      int limit = 60}) async {
+    listingsFetches++;
     return List<dynamic>.from(allListings);
   }
 
@@ -74,9 +95,11 @@ class FakeApi extends Api {
   @override
   Future<List<dynamic>> convs() async => [];
   @override
-  Future<Map<String, dynamic>> conv(int id) => Future.value({'ok': true, 'conv': {}, 'messages': []});
+  Future<Map<String, dynamic>> conv(int id) =>
+      Future.value({'ok': true, 'conv': {}, 'messages': []});
   @override
-  Future<Map<String, dynamic>> messages(int convId, {int after = 0}) => Future.value({'items': []});
+  Future<Map<String, dynamic>> messages(int convId, {int after = 0}) =>
+      Future.value({'items': []});
   @override
   Future<int> unread() async => 0;
   @override
@@ -91,7 +114,7 @@ Future<AppState> readyState(Api api) async {
   SharedPreferences.setMockInitialValues(<String, Object>{});
   final st = AppState();
   await st.boot(); // reads mock prefs, builds its own Api...
-  st.api = api;    // ...then we swap in the fake (AppState.api is a plain field)
+  st.api = api; // ...then we swap in the fake (AppState.api is a plain field)
   return st;
 }
 

@@ -1,15 +1,14 @@
 // HuntInKE — shared helpers. Exact port of the website's ui.js helpers
 // (kes, timeAgo, distances, WhatsApp links) + image compression to data URLs.
 import 'dart:convert';
-import 'dart:io' show HttpClient;
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'data.dart';
 
 // 'KES 12,500'
-String kes(num? n) => 'KES ${(n ?? 0).round().toString().replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}';
+String kes(num? n) =>
+    'KES ${(n ?? 0).round().toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}';
 
 // '12.5k' for map price chips
 String shortK(num n) {
@@ -17,8 +16,13 @@ String shortK(num n) {
   return '${v >= 10 ? v.round().toString() : v.toStringAsFixed(1).replaceAll('.0', '')}k';
 }
 
-String perShort(String? p) =>
-    p == null ? 'mo' : p.startsWith('Per Month') ? 'mo' : p.startsWith('Per Semester') ? 'sem' : 'yr';
+String perShort(String? p) => p == null
+    ? 'mo'
+    : p.startsWith('Per Month')
+        ? 'mo'
+        : p.startsWith('Per Semester')
+            ? 'sem'
+            : 'yr';
 
 // "Floors" = how many floors the building has (a compound can be G+20).
 String floorLabel(String? f) {
@@ -30,9 +34,13 @@ String floorLabel(String? f) {
 
 double distMeters(double lat1, double lng1, double lat2, double lng2) {
   const r = 6371000.0;
-  final dLa = (lat2 - lat1) * math.pi / 180, dLo = (lng2 - lng1) * math.pi / 180;
+  final dLa = (lat2 - lat1) * math.pi / 180,
+      dLo = (lng2 - lng1) * math.pi / 180;
   final s = math.sin(dLa / 2) * math.sin(dLa / 2) +
-      math.cos(lat1 * math.pi / 180) * math.cos(lat2 * math.pi / 180) * math.sin(dLo / 2) * math.sin(dLo / 2);
+      math.cos(lat1 * math.pi / 180) *
+          math.cos(lat2 * math.pi / 180) *
+          math.sin(dLo / 2) *
+          math.sin(dLo / 2);
   return 2 * r * math.asin(math.sqrt(s));
 }
 
@@ -48,54 +56,57 @@ Town? nearestTown(double lat, double lng) {
   var bd = double.infinity;
   for (final t in towns) {
     final d = distMeters(lat, lng, t.lat, t.lng);
-    if (d < bd) { bd = d; best = t; }
+    if (d < bd) {
+      bd = d;
+      best = t;
+    }
   }
   return best; // caller decides the distance cut-off (web: 60 km)
 }
 
-// ---------- map tile probe ----------
-// The map used to sit BLANK forever when the first tile source hung (a tile
-// request that never answers never reaches errorTileCallback, so the CARTO
-// fallback never fired). Now we probe ONE real tile with a hard 4 s limit at
-// screen open: answers = Google roads, no answer / error = CARTO Voyager. Both
-// are the same two sources the website's maps.js uses.
-Future<bool> tileSourceWorks(String urlTemplate, {List<String> subdomains = const ['0', '1', '2', '3'], Duration limit = const Duration(seconds: 4)}) async {
-  try {
-    final u = urlTemplate
-        .replaceAll('{s}', subdomains.first)
-        .replaceAll('{z}', '8')
-        .replaceAll('{x}', '117') // covers central Kenya
-        .replaceAll('{y}', '118')
-        .replaceAll('&s=Ga', '');
-    final client = HttpClient();
-    client.connectionTimeout = limit;
-    final req = await client.getUrl(Uri.parse(u));
-    final res = await req.close().timeout(limit);
-    final ok = res.statusCode == 200;
-    res.listen((_) {}, cancelOnError: true); // body not needed — status is the answer
-    client.close();
-    return ok;
-  } catch (_) {
-    return false;
-  }
-}
-
 String timeAgo(int? ts) {
   if (ts == null || ts <= 0) return '';
-  final s = math.max(1, (DateTime.now().millisecondsSinceEpoch - ts) / 1000).floor();
+  final s =
+      math.max(1, (DateTime.now().millisecondsSinceEpoch - ts) / 1000).floor();
   if (s < 60) return 'just now';
   if (s < 3600) return '${(s / 60).floor()}m ago';
   if (s < 86400) return '${(s / 3600).floor()}h ago';
   if (s < 86400 * 7) return '${(s / 86400).floor()}d ago';
   final d = DateTime.fromMillisecondsSinceEpoch(ts);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
   return '${d.day} ${months[d.month - 1]}';
 }
 
 String fmtDate(int? ts) {
   if (ts == null || ts <= 0) return '';
   final d = DateTime.fromMillisecondsSinceEpoch(ts);
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
   return '${d.day} ${months[d.month - 1]} ${d.year}';
 }
 
@@ -118,7 +129,9 @@ String waLink(String? num, [String? text]) {
   var n = (num ?? '').replaceAll(RegExp(r'[\s+-]'), '');
   if (n.startsWith('0')) n = '254${n.substring(1)}';
   var out = 'https://wa.me/$n';
-  if (text != null && text.isNotEmpty) out += '?text=${Uri.encodeComponent(text)}';
+  if (text != null && text.isNotEmpty) {
+    out += '?text=${Uri.encodeComponent(text)}';
+  }
   return out;
 }
 
@@ -128,10 +141,14 @@ List<String> amenityTags(Map<String, dynamic> l) {
   if (l['water'] == 'Included in rent') t.add('Water incl.');
   if (l['wifi'] == 'Included in rent') t.add('WiFi');
   if (l['elec'] == 'Included in rent') t.add('Power incl.');
-  if (l['ensuite'] == 'Yes' || l['bath'] == 'Ensuite (own)') t.add('Bathroom inside');
+  if (l['ensuite'] == 'Yes' || l['bath'] == 'Ensuite (own)') {
+    t.add('Bathroom inside');
+  }
   if (l['kitchen'] == 'Yes' || l['kitchen'] == 'Own') t.add('Own kitchen');
   if (l['parking'] == 'Yes') t.add('Parking');
-  if (l['backup'] != null && l['backup'] != 'None') t.add('${l['backup']} backup');
+  if (l['backup'] != null && l['backup'] != 'None') {
+    t.add('${l['backup']} backup');
+  }
   if (parseSecurity(l['security'] as String?).contains('Guard')) t.add('Guard');
   return t.take(3).toList();
 }
@@ -142,7 +159,8 @@ const imgRe = r'^data:image/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$';
 bool isImg(String? d) =>
     d != null && d.length < 1200000 && RegExp(imgRe).hasMatch(d);
 
-Future<String> compressToDataUrl(Uint8List bytes, {int maxKB = 260, int maxDim = 1400, int q = 78}) async {
+Future<String> compressToDataUrl(Uint8List bytes,
+    {int maxKB = 260, int maxDim = 1400, int q = 78}) async {
   var quality = q;
   var dim = maxDim;
   var out = await _one(bytes, dim, quality);
@@ -158,7 +176,12 @@ Future<String> compressToDataUrl(Uint8List bytes, {int maxKB = 260, int maxDim =
 Future<Uint8List> _one(Uint8List bytes, int dim, int q) async {
   try {
     final r = await FlutterImageCompress.compressWithList(
-      bytes, minWidth: dim, minHeight: dim, quality: q, format: CompressFormat.jpeg, keepExif: true,
+      bytes,
+      minWidth: dim,
+      minHeight: dim,
+      quality: q,
+      format: CompressFormat.jpeg,
+      keepExif: true,
     );
     return r;
   } catch (_) {
@@ -170,7 +193,11 @@ Future<Uint8List> _one(Uint8List bytes, int dim, int q) async {
 Future<String> thumbFrom(Uint8List bytes) async {
   try {
     final r = await FlutterImageCompress.compressWithList(
-      bytes, minWidth: 340, minHeight: 340, quality: 60, format: CompressFormat.jpeg,
+      bytes,
+      minWidth: 340,
+      minHeight: 340,
+      quality: 60,
+      format: CompressFormat.jpeg,
     );
     return 'data:image/jpeg;base64,${base64Encode(r)}';
   } catch (_) {

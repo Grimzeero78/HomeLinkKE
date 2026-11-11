@@ -8,7 +8,8 @@ import 'helpers.dart';
 void main() {
   testWidgets('splash shows logo + name, then the home shell appears',
       (tester) async {
-    final st = await readyState(FakeApi());
+    final api = FakeApi();
+    final st = await readyState(api);
     await tester.pumpWidget(HuntInApp(state: st));
     await tester.pump(const Duration(milliseconds: 200));
 
@@ -28,5 +29,7 @@ void main() {
     expect(find.text('Map'), findsOneWidget);
     expect(find.text('Chats'), findsOneWidget);
     expect(find.text('Profile'), findsOneWidget);
+    expect(api.listingsFetches, 1,
+        reason: 'the map must not fetch listings before its tab is opened');
   });
 }

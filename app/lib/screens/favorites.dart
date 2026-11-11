@@ -25,18 +25,26 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = ''; });
+    setState(() {
+      _loading = true;
+      _error = '';
+    });
     final st = context.read<AppState>();
     try {
       final rows = await st.api.myFavorites();
       if (!mounted) return;
       setState(() {
-        _items = rows.map((j) => Listing.fromJson((j as Map).cast<String, dynamic>())).toList();
+        _items = rows
+            .map((j) => Listing.fromJson((j as Map).cast<String, dynamic>()))
+            .toList();
         _loading = false;
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString().replaceFirst('ApiException: ', ''); _loading = false; });
+      setState(() {
+        _error = e.toString().replaceFirst('ApiException: ', '');
+        _loading = false;
+      });
     }
   }
 
@@ -47,9 +55,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       backgroundColor: t.bg,
       appBar: AppBar(title: const Text('Favourites')),
       body: _loading
-          ? ListView(padding: const EdgeInsets.all(14), children: const [Skel(h: 300)])
+          ? ListView(
+              padding: const EdgeInsets.all(14), children: const [Skel(h: 300)])
           : _error.isNotEmpty
-              ? ListView(children: [EmptyBox(Icons.wifi_off, 'Sign in required', _error)])
+              ? ListView(children: [
+                  EmptyBox(Icons.wifi_off, 'Sign in required', _error)
+                ])
               : _items.isEmpty
                   ? ListView(children: const [
                       EmptyBox(Icons.favorite_border, 'No favourites yet',
@@ -62,8 +73,12 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.all(14),
                         children: [
-                          ListingGrid(_items, onOpen: (l) =>
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => ListingScreen(l.id)))
+                          ListingGrid(_items,
+                              onOpen: (l) => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (_) => ListingScreen(l.id,
+                                              initialListing: l)))
                                   .then((_) => _load())),
                         ],
                       ),

@@ -360,9 +360,8 @@ async function queryListings(env, url, opts = {}) {
     else if (a === 'backup') add("l.backup != 'None'");
   }
   if (opts.exclude) add('l.id != ?', opts.exclude);
-  if (opts.similarTo) {
-    const base = await env.DB.prepare('SELECT town, ptype FROM listings WHERE id = ?').bind(opts.similarTo).first();
-    if (base) add('(l.town = ? OR l.ptype = ?)', base.town, base.ptype);
+  if (opts.similarTown != null && opts.similarPtype != null) {
+    add('(l.town = ? OR l.ptype = ?)', opts.similarTown, opts.similarPtype);
   }
 
   // TOWN-TARGETED BOOSTS — the HuntInKE ranking rule:
@@ -589,8 +588,13 @@ export async function onRequest(context) {
         const isOwner = !!(user && user.id === l.ownerId);
         const canViewRemoved = isOwner || (user && user.role === 'ADMIN');
         if (l.status === 'REMOVED' && !canViewRemoved) return bad('Listing not found', 404);
-        const photos = (await env.DB.prepare('SELECT id, url, thumb FROM photos WHERE listingId = ? ORDER BY idx').bind(id).all()).results || [];
-        const similar = await queryListings(env, new URL('http://x/?limit=4'), { similarTo: id, exclude: id });
+        const [photoResult, similar] = await Promise.all([
+          env.DB.prepare('SELECT id, url, thumb FROM photos WHERE listingId = ? ORDER BY idx').bind(id).all(),
+          queryListings(env, new URL('http://x/?limit=4'), {
+            similarTown: l.town, similarPtype: l.ptype, exclude: id,
+          }),
+        ]);
+        const photos = photoResult.results || [];
         const pub = { ...l };
         if (!user) { pub.ownerPhone = ''; pub.contactPhone = ''; } // contact details require sign-in (privacy promise made in the wizard)
         return ok({ listing: pub, photos, similar, isOwner: !!isOwner });

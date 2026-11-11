@@ -21,7 +21,16 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreenState extends State<CreateScreen> {
-  static const _stepNames = ['Basics', 'Location', 'Pricing', 'Utilities', 'Inside', 'Tenants', 'Availability', 'Photos'];
+  static const _stepNames = [
+    'Basics',
+    'Location',
+    'Pricing',
+    'Utilities',
+    'Inside',
+    'Tenants',
+    'Availability',
+    'Photos'
+  ];
   int _step = 0;
   bool _busy = false;
   String _error = '';
@@ -29,25 +38,69 @@ class _CreateScreenState extends State<CreateScreen> {
 
   // ---- the listing draft (same keys the API expects) ----
   final Map<String, dynamic> L = {
-    'title': '', 'ptype': 'Bedsitter', 'units': 1, 'unitsVacant': 1,
-    'furnishing': 'Unfurnished', 'floor': 'Ground',
-    'town': '', 'area': '', 'landmark': '', 'lat': null, 'lng': null, 'road': 'Tarmac',
-    'rent': '', 'period': 'Per Month', 'deposit': '', 'fees': 'None', 'negotiable': false, 'terms': '',
-    'water': 'Included in rent', 'waterCost': '', 'waterSched': '', 'waterTank': 'No',
-    'elec': 'Own token meter', 'elecCost': '', 'wifi': 'Not available', 'wifiCost': '', 'wifiProvider': '',
-    'garbage': 'Included', 'backup': 'None',
-    'bath': '1', 'ensuite': 'No', 'kitchen': 'No', 'parking': 'No', 'balcony': 'No',
-    'tile': 'Tiled', 'ceiling': 'Yes', 'wardrobe': 'No', 'hotShower': 'No',
-    'security': <String>[], 'tenantPref': 'Anyone', 'pets': 'No',
-    'availableFrom': 'Available now', 'contactPhone': '', 'tags': '',
-    'photos': <String>[], 'thumbs': <String>[],
+    'title': '',
+    'ptype': 'Bedsitter',
+    'units': 1,
+    'unitsVacant': 1,
+    'furnishing': 'Unfurnished',
+    'floor': 'Ground',
+    'town': '',
+    'area': '',
+    'landmark': '',
+    'lat': null,
+    'lng': null,
+    'road': 'Tarmac',
+    'rent': '',
+    'period': 'Per Month',
+    'deposit': '',
+    'fees': 'None',
+    'negotiable': false,
+    'terms': '',
+    'water': 'Included in rent',
+    'waterCost': '',
+    'waterSched': '',
+    'waterTank': 'No',
+    'elec': 'Own token meter',
+    'elecCost': '',
+    'wifi': 'Not available',
+    'wifiCost': '',
+    'wifiProvider': '',
+    'garbage': 'Included',
+    'backup': 'None',
+    'bath': '1',
+    'ensuite': 'No',
+    'kitchen': 'No',
+    'parking': 'No',
+    'balcony': 'No',
+    'tile': 'Tiled',
+    'ceiling': 'Yes',
+    'wardrobe': 'No',
+    'hotShower': 'No',
+    'security': <String>[],
+    'tenantPref': 'Anyone',
+    'pets': 'No',
+    'availableFrom': 'Available now',
+    'contactPhone': '',
+    'tags': '',
+    'photos': <String>[],
+    'thumbs': <String>[],
   };
 
-  final _title = TextEditingController(), _area = TextEditingController(), _landmark = TextEditingController(),
-      _rent = TextEditingController(), _deposit = TextEditingController(), _fees = TextEditingController(),
-      _terms = TextEditingController(), _waterCost = TextEditingController(), _waterSched = TextEditingController(),
-      _elecCost = TextEditingController(), _wifiCost = TextEditingController(), _wifiProvider = TextEditingController(),
-      _phone = TextEditingController(), _tags = TextEditingController(), _availDate = TextEditingController();
+  final _title = TextEditingController(),
+      _area = TextEditingController(),
+      _landmark = TextEditingController(),
+      _rent = TextEditingController(),
+      _deposit = TextEditingController(),
+      _fees = TextEditingController(),
+      _terms = TextEditingController(),
+      _waterCost = TextEditingController(),
+      _waterSched = TextEditingController(),
+      _elecCost = TextEditingController(),
+      _wifiCost = TextEditingController(),
+      _wifiProvider = TextEditingController(),
+      _phone = TextEditingController(),
+      _tags = TextEditingController(),
+      _availDate = TextEditingController();
 
   final MapController _pinMap = MapController();
   ll.LatLng? _pin;
@@ -61,7 +114,23 @@ class _CreateScreenState extends State<CreateScreen> {
 
   @override
   void dispose() {
-    for (final c in [_title, _area, _landmark, _rent, _deposit, _fees, _terms, _waterCost, _waterSched, _elecCost, _wifiCost, _wifiProvider, _phone, _tags, _availDate]) {
+    for (final c in [
+      _title,
+      _area,
+      _landmark,
+      _rent,
+      _deposit,
+      _fees,
+      _terms,
+      _waterCost,
+      _waterSched,
+      _elecCost,
+      _wifiCost,
+      _wifiProvider,
+      _phone,
+      _tags,
+      _availDate
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -74,7 +143,10 @@ class _CreateScreenState extends State<CreateScreen> {
       final r = await st.api.listing(widget.editId!);
       if (!mounted) return;
       if (r['isOwner'] != true) {
-        setState(() { _error = 'Not your listing.'; _loadingExisting = false; });
+        setState(() {
+          _error = 'Not your listing.';
+          _loadingExisting = false;
+        });
         return;
       }
       final l = (r['listing'] as Map).cast<String, dynamic>();
@@ -93,19 +165,29 @@ class _CreateScreenState extends State<CreateScreen> {
       _wifiProvider.text = (l['wifiProvider'] ?? '').toString();
       _phone.text = (l['contactPhone'] ?? '').toString();
       _tags.text = (l['tags'] ?? '').toString();
-      L['negotiable'] = l['negotiable'] == 1 || l['negotiable'] == true || l['negotiable'] == 'Yes';
+      L['negotiable'] = l['negotiable'] == 1 ||
+          l['negotiable'] == true ||
+          l['negotiable'] == 'Yes';
       L['security'] = parseSecurity((l['security'] ?? '[]').toString());
-      L['photos'] = ((r['photos'] ?? []) as List).map((p) => (p as Map)['url'].toString()).toList();
-      L['thumbs'] = ((r['photos'] ?? []) as List).map((p) => (p as Map)['thumb']?.toString() ?? '').toList();
+      L['photos'] = ((r['photos'] ?? []) as List)
+          .map((p) => (p as Map)['url'].toString())
+          .toList();
+      L['thumbs'] = ((r['photos'] ?? []) as List)
+          .map((p) => (p as Map)['thumb']?.toString() ?? '')
+          .toList();
       if (l['lat'] != null && l['lng'] != null) {
-        _pin = ll.LatLng((l['lat'] as num).toDouble(), (l['lng'] as num).toDouble());
+        _pin = ll.LatLng(
+            (l['lat'] as num).toDouble(), (l['lng'] as num).toDouble());
       }
       final tw = towns.where((x) => x.n == (l['town'] ?? '')).firstOrNull;
       _townSel = tw;
       setState(() => _loadingExisting = false);
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString().replaceFirst('ApiException: ', ''); _loadingExisting = false; });
+      setState(() {
+        _error = e.toString().replaceFirst('ApiException: ', '');
+        _loadingExisting = false;
+      });
     }
   }
 
@@ -113,7 +195,9 @@ class _CreateScreenState extends State<CreateScreen> {
   String? _validate() {
     switch (_step) {
       case 0:
-        if (_title.text.trim().length < 4) return 'Title must be at least 4 characters';
+        if (_title.text.trim().length < 4) {
+          return 'Title must be at least 4 characters';
+        }
         if (_townSel == null) return 'Choose the town';
         return null;
       case 2:
@@ -154,35 +238,50 @@ class _CreateScreenState extends State<CreateScreen> {
     if (_availDate.text.isNotEmpty && L['availableFrom'] == 'Pick a date…') {
       L['availableFrom'] = _availDate.text.trim();
     }
-    setState(() { _busy = true; _error = ''; });
+    setState(() {
+      _busy = true;
+      _error = '';
+    });
     try {
       if (widget.editId != null) {
         await st.api.updateListing(widget.editId!, L);
         if (!mounted) return;
         snack(context, 'Listing updated');
-        Notifs.showAccount('Listing updated', '"${L['title']}" was saved successfully.');
+        Notifs.showAccount(
+            'Listing updated', '"${L['title']}" was saved successfully.');
       } else {
         await st.api.createListing(L);
         if (!mounted) return;
         snack(context, 'Listing posted!');
-        Notifs.showAccount('Listing posted', '"${L['title']}" is now live. Boost it for KES $boostAmountKes to get seen first.');
+        Notifs.showAccount('Listing posted',
+            '"${L['title']}" is now live. Boost it for KES $boostAmountKes to get seen first.');
       }
       Navigator.pop(context);
     } catch (e) {
-      setState(() { _error = e.toString().replaceFirst('ApiException: ', ''); _busy = false; });
+      setState(() {
+        _error = e.toString().replaceFirst('ApiException: ', '');
+        _busy = false;
+      });
     }
   }
 
   Future<void> _addPhotos() async {
     final picker = ImagePicker();
     final room = 8 - (L['photos'] as List).length;
-    if (room <= 0) { snack(context, 'Maximum 8 photos', error: true); return; }
+    if (room <= 0) {
+      snack(context, 'Maximum 8 photos', error: true);
+      return;
+    }
     final imgs = await picker.pickMultiImage(imageQuality: 70, limit: room);
     if (imgs.isEmpty) return;
-    if (mounted) snack(context, 'Processing ${imgs.length} photo${imgs.length == 1 ? '' : 's'}…');
+    if (mounted) {
+      snack(context,
+          'Processing ${imgs.length} photo${imgs.length == 1 ? '' : 's'}…');
+    }
     for (final x in imgs) {
       final bytes = await x.readAsBytes();
-      final url = await compressToDataUrl(bytes, maxKB: 700, maxDim: 1200, q: 72);
+      final url =
+          await compressToDataUrl(bytes, maxKB: 700, maxDim: 1200, q: 72);
       final thumb = await thumbFrom(bytes);
       setState(() {
         (L['photos'] as List).add(url);
@@ -206,31 +305,45 @@ class _CreateScreenState extends State<CreateScreen> {
       return const Scaffold(body: Center(child: Text('Please sign in first')));
     }
     if (st.user!.role != 'LANDLORD' && st.user!.role != 'ADMIN') {
-      return Scaffold(backgroundColor: t.bg, appBar: AppBar(), body: ListView(children: const [
-        EmptyBox(Icons.lock_outline, 'Landlords only',
-            'Only landlord accounts can post listings. Create a landlord account to list your rooms.'),
-      ]));
+      return Scaffold(
+          backgroundColor: t.bg,
+          appBar: AppBar(),
+          body: ListView(children: const [
+            EmptyBox(Icons.lock_outline, 'Landlords only',
+                'Only landlord accounts can post listings. Create a landlord account to list your rooms.'),
+          ]));
     }
     if (_loadingExisting) {
-      return Scaffold(backgroundColor: t.bg, appBar: AppBar(), body: ListView(padding: const EdgeInsets.all(14), children: const [Skel(h: 300)]));
+      return Scaffold(
+          backgroundColor: t.bg,
+          appBar: AppBar(),
+          body: ListView(
+              padding: const EdgeInsets.all(14),
+              children: const [Skel(h: 300)]));
     }
 
     return Scaffold(
       backgroundColor: t.bg,
-      appBar: AppBar(title: Text(widget.editId != null ? 'Edit listing' : 'Post a listing')),
+      appBar: AppBar(
+          title:
+              Text(widget.editId != null ? 'Edit listing' : 'Post a listing')),
       body: Column(children: [
         // step header
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 6, 14, 4),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('Step ${_step + 1} of 8 — ${_stepNames[_step]}',
-                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15, color: t.ink)),
+                style: TextStyle(
+                    fontWeight: FontWeight.w800, fontSize: 15, color: t.ink)),
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(99),
               child: LinearProgressIndicator(
-                value: (_step + 1) / 8, minHeight: 6,
-                backgroundColor: t.soft, color: t.pine,
+                value: (_step + 1) / 8,
+                minHeight: 6,
+                backgroundColor: t.soft,
+                color: t.pine,
               ),
             ),
           ]),
@@ -254,13 +367,19 @@ class _CreateScreenState extends State<CreateScreen> {
             child: Row(children: [
               if (_step > 0)
                 OutlinedButton(
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
-                  onPressed: () => setState(() { _step--; _error = ''; }),
+                  style:
+                      OutlinedButton.styleFrom(minimumSize: const Size(0, 48)),
+                  onPressed: () => setState(() {
+                    _step--;
+                    _error = '';
+                  }),
                   child: const Text('Back'),
                 )
               else
-                Expanded(child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context), child: const Text('Cancel'))),
+                Expanded(
+                    child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Cancel'))),
               const SizedBox(width: 9),
               Expanded(
                 flex: 2,
@@ -269,7 +388,10 @@ class _CreateScreenState extends State<CreateScreen> {
                       ? null
                       : () {
                           final err = _validate();
-                          if (err != null) { setState(() => _error = err); return; }
+                          if (err != null) {
+                            setState(() => _error = err);
+                            return;
+                          }
                           setState(() => _error = '');
                           if (_step < 7) {
                             setState(() => _step++);
@@ -278,8 +400,17 @@ class _CreateScreenState extends State<CreateScreen> {
                           }
                         },
                   child: _busy
-                      ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4, valueColor: AlwaysStoppedAnimation(Colors.white)))
-                      : Text(_step < 7 ? 'Next' : (widget.editId != null ? 'Save changes' : 'Post my listing')),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              valueColor: AlwaysStoppedAnimation(Colors.white)))
+                      : Text(_step < 7
+                          ? 'Next'
+                          : (widget.editId != null
+                              ? 'Save changes'
+                              : 'Post my listing')),
                 ),
               ),
             ]),
@@ -292,15 +423,24 @@ class _CreateScreenState extends State<CreateScreen> {
   // ---------- step bodies ----------
   Widget _body(BuildContext context) {
     switch (_step) {
-      case 0: return _basics(context);
-      case 1: return _location(context);
-      case 2: return _pricing(context);
-      case 3: return _utilities(context);
-      case 4: return _inside(context);
-      case 5: return _tenants(context);
-      case 6: return _availability(context);
-      case 7: return _photosStep(context);
-      default: return const SizedBox.shrink();
+      case 0:
+        return _basics(context);
+      case 1:
+        return _location(context);
+      case 2:
+        return _pricing(context);
+      case 3:
+        return _utilities(context);
+      case 4:
+        return _inside(context);
+      case 5:
+        return _tenants(context);
+      case 6:
+        return _availability(context);
+      case 7:
+        return _photosStep(context);
+      default:
+        return const SizedBox.shrink();
     }
   }
 
@@ -309,11 +449,13 @@ class _CreateScreenState extends State<CreateScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(0, 13, 0, 6),
       child: Text(s + (hint == null ? '' : '  ($hint)'),
-          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: t.ink2)),
+          style: TextStyle(
+              fontSize: 12.5, fontWeight: FontWeight.w700, color: t.ink2)),
     );
   }
 
-  Widget _seg(BuildContext context, List<String> options, String value, void Function(String) onPick) {
+  Widget _seg(BuildContext context, List<String> options, String value,
+      void Function(String) onPick) {
     final t = T(Theme.of(context).brightness);
     return Wrap(spacing: 7, runSpacing: 7, children: [
       for (final o in options)
@@ -324,25 +466,33 @@ class _CreateScreenState extends State<CreateScreen> {
             decoration: BoxDecoration(
               color: value == o ? t.pineBtn : t.card,
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(color: value == o ? t.pineBtn : t.line, width: 1.4),
+              border: Border.all(
+                  color: value == o ? t.pineBtn : t.line, width: 1.4),
             ),
-            child: Text(o, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700,
-                color: value == o ? Colors.white : t.ink2)),
+            child: Text(o,
+                style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: value == o ? Colors.white : t.ink2)),
           ),
         ),
     ]);
   }
 
-  Widget _yn(BuildContext context, String key) => _seg(context, ['Yes', 'No'], (L[key] ?? 'No').toString(),
-      (v) => setState(() => L[key] = v));
+  Widget _yn(BuildContext context, String key) => _seg(context, ['Yes', 'No'],
+      (L[key] ?? 'No').toString(), (v) => setState(() => L[key] = v));
 
   Widget _basics(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Listing title'),
-      TextField(controller: _title, maxLength: 90,
-          decoration: const InputDecoration(hintText: 'e.g. Clean bedsitter near Chuka University gate')),
+      TextField(
+          controller: _title,
+          maxLength: 90,
+          decoration: const InputDecoration(
+              hintText: 'e.g. Clean bedsitter near Chuka University gate')),
       _lbl(context, 'Property type'),
-      _seg(context, propertyTypes, (L['ptype'] ?? '').toString(), (v) => setState(() => L['ptype'] = v)),
+      _seg(context, propertyTypes, (L['ptype'] ?? '').toString(),
+          (v) => setState(() => L['ptype'] = v)),
       _lbl(context, 'How many units in the compound?', 'rooms / houses total'),
       SizedBox(
         width: 110,
@@ -356,20 +506,29 @@ class _CreateScreenState extends State<CreateScreen> {
         ),
       ),
       _lbl(context, 'Furnishing'),
-      _seg(context, furnishingOptions, (L['furnishing'] ?? '').toString(), (v) => setState(() => L['furnishing'] = v)),
+      _seg(context, furnishingOptions, (L['furnishing'] ?? '').toString(),
+          (v) => setState(() => L['furnishing'] = v)),
       _lbl(context, 'How many floors does the building have?'),
       SizedBox(
         height: 44,
         child: DropdownButtonFormField<String>(
           initialValue: (L['floor'] ?? 'Ground').toString(),
-          decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
-          items: [for (final f in floorOptions) DropdownMenuItem(value: f, child: Text(f == 'Ground' ? 'Ground only' : f))],
+          decoration: const InputDecoration(
+              contentPadding: EdgeInsets.symmetric(horizontal: 12)),
+          items: [
+            for (final f in floorOptions)
+              DropdownMenuItem(
+                  value: f, child: Text(f == 'Ground' ? 'Ground only' : f))
+          ],
           onChanged: (v) => setState(() => L['floor'] = v),
         ),
       ),
-      _lbl(context, 'Search tags', 'renters find you by words like "near JKUAT" — comma separated'),
-      TextField(controller: _tags,
-          decoration: const InputDecoration(hintText: 'e.g. near JKUAT, behind market, bodaboda stage')),
+      _lbl(context, 'Search tags',
+          'renters find you by words like "near JKUAT" — comma separated'),
+      TextField(
+          controller: _tags,
+          decoration: const InputDecoration(
+              hintText: 'e.g. near JKUAT, behind market, bodaboda stage')),
     ]);
   }
 
@@ -382,18 +541,30 @@ class _CreateScreenState extends State<CreateScreen> {
         child: DropdownButtonFormField<Town>(
           initialValue: _townSel,
           isExpanded: true,
-          decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
-          items: [for (final tw in towns) DropdownMenuItem(value: tw, child: Text(tw.n))],
+          decoration: const InputDecoration(
+              contentPadding: EdgeInsets.symmetric(horizontal: 12)),
+          items: [
+            for (final tw in towns)
+              DropdownMenuItem(value: tw, child: Text(tw.n))
+          ],
           onChanged: (v) => setState(() => _townSel = v),
         ),
       ),
       _lbl(context, 'Area / estate'),
-      TextField(controller: _area, decoration: const InputDecoration(hintText: 'e.g. Magomano, Kianjai')),
+      TextField(
+          controller: _area,
+          decoration:
+              const InputDecoration(hintText: 'e.g. Magomano, Kianjai')),
       _lbl(context, 'Nearest landmark'),
-      TextField(controller: _landmark, decoration: const InputDecoration(hintText: 'e.g. next to Chuka Law Courts')),
+      TextField(
+          controller: _landmark,
+          decoration:
+              const InputDecoration(hintText: 'e.g. next to Chuka Law Courts')),
       _lbl(context, 'Road access'),
-      _seg(context, roadOptions, (L['road'] ?? '').toString(), (v) => setState(() => L['road'] = v)),
-      _lbl(context, 'Pin the exact spot on the map', 'renters see this pin and get directions to it'),
+      _seg(context, roadOptions, (L['road'] ?? '').toString(),
+          (v) => setState(() => L['road'] = v)),
+      _lbl(context, 'Pin the exact spot on the map',
+          'renters see this pin and get directions to it'),
       ClipRRect(
         borderRadius: BorderRadius.circular(14),
         child: SizedBox(
@@ -406,11 +577,22 @@ class _CreateScreenState extends State<CreateScreen> {
               onTap: (tap, p) => setState(() => _pin = p),
             ),
             children: [
-              TileLayer(urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', userAgentPackageName: 'ke.huntin.app'),
+              TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.huntin.ke'),
+              const RichAttributionWidget(
+                attributions: [
+                  TextSourceAttribution('© OpenStreetMap contributors')
+                ],
+              ),
               if (_pin != null)
                 MarkerLayer(markers: [
-                  Marker(point: _pin!, width: 44, height: 44, child:
-                      const Icon(Icons.location_on, size: 44, color: C.bad)),
+                  Marker(
+                      point: _pin!,
+                      width: 44,
+                      height: 44,
+                      child: const Icon(Icons.location_on,
+                          size: 44, color: C.bad)),
                 ]),
             ],
           ),
@@ -418,12 +600,16 @@ class _CreateScreenState extends State<CreateScreen> {
       ),
       const SizedBox(height: 7),
       Row(children: [
-        Expanded(child: Text(_pin == null
-            ? 'Tap the map to drop your pin'
-            : 'Pin set — ${_pin!.latitude.toStringAsFixed(5)}, ${_pin!.longitude.toStringAsFixed(5)}',
-            style: TextStyle(fontSize: 12, color: t.ink2))),
+        Expanded(
+            child: Text(
+                _pin == null
+                    ? 'Tap the map to drop your pin'
+                    : 'Pin set — ${_pin!.latitude.toStringAsFixed(5)}, ${_pin!.longitude.toStringAsFixed(5)}',
+                style: TextStyle(fontSize: 12, color: t.ink2))),
         if (_pin != null)
-          TextButton(onPressed: () => setState(() => _pin = null), child: const Text('Remove pin', style: TextStyle(fontSize: 12))),
+          TextButton(
+              onPressed: () => setState(() => _pin = null),
+              child: const Text('Remove pin', style: TextStyle(fontSize: 12))),
       ]),
     ]);
   }
@@ -438,63 +624,94 @@ class _CreateScreenState extends State<CreateScreen> {
   Widget _pricing(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Rent (KES)'),
-      TextField(controller: _rent, keyboardType: TextInputType.number,
+      TextField(
+          controller: _rent,
+          keyboardType: TextInputType.number,
           decoration: const InputDecoration(hintText: 'e.g. 6500')),
       _lbl(context, 'Billing period'),
-      _seg(context, periods, (L['period'] ?? '').toString(), (v) => setState(() => L['period'] = v)),
+      _seg(context, periods, (L['period'] ?? '').toString(),
+          (v) => setState(() => L['period'] = v)),
       _lbl(context, 'Deposit (KES)', '0 if none'),
-      TextField(controller: _deposit, keyboardType: TextInputType.number,
+      TextField(
+          controller: _deposit,
+          keyboardType: TextInputType.number,
           decoration: const InputDecoration(hintText: 'e.g. 6500')),
       _lbl(context, 'Move-in fees', 'water deposit, garbage, NONE…'),
-      TextField(controller: _fees, decoration: const InputDecoration(hintText: 'e.g. None')),
+      TextField(
+          controller: _fees,
+          decoration: const InputDecoration(hintText: 'e.g. None')),
       _lbl(context, 'Negotiable?'),
       _seg(context, ['Yes', 'No'], L['negotiable'] == true ? 'Yes' : 'No',
           (v) => setState(() => L['negotiable'] = v == 'Yes')),
       _lbl(context, 'Other terms', 'rules, notice period, anything else'),
-      TextField(controller: _terms, maxLines: 3,
-          decoration: const InputDecoration(hintText: 'e.g. Rent due by 5th of every month')),
+      TextField(
+          controller: _terms,
+          maxLines: 3,
+          decoration: const InputDecoration(
+              hintText: 'e.g. Rent due by 5th of every month')),
     ]);
   }
 
   Widget _utilities(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Water'),
-      _seg(context, waterOptions, (L['water'] ?? '').toString(), (v) => setState(() => L['water'] = v)),
+      _seg(context, waterOptions, (L['water'] ?? '').toString(),
+          (v) => setState(() => L['water'] = v)),
       if (L['water'] == 'Pay separately' || L['water'] == 'Rationed') ...[
         _lbl(context, 'Water cost'),
-        TextField(controller: _waterCost, decoration: const InputDecoration(hintText: 'e.g. KES 200 per 20L jerrican')),
+        TextField(
+            controller: _waterCost,
+            decoration: const InputDecoration(
+                hintText: 'e.g. KES 200 per 20L jerrican')),
       ],
       if (L['water'] == 'Rationed') ...[
         _lbl(context, 'Water schedule'),
-        TextField(controller: _waterSched, decoration: const InputDecoration(hintText: 'e.g. Tue & Fri, 6–9 AM')),
+        TextField(
+            controller: _waterSched,
+            decoration:
+                const InputDecoration(hintText: 'e.g. Tue & Fri, 6–9 AM')),
       ],
       _lbl(context, 'Storage tank?'),
       _yn(context, 'waterTank'),
       _lbl(context, 'Electricity'),
-      _seg(context, electricityOptions, (L['elec'] ?? '').toString(), (v) => setState(() => L['elec'] = v)),
+      _seg(context, electricityOptions, (L['elec'] ?? '').toString(),
+          (v) => setState(() => L['elec'] = v)),
       if (L['elec'] == 'Shared meter') ...[
         _lbl(context, 'Electricity cost'),
-        TextField(controller: _elecCost, decoration: const InputDecoration(hintText: 'e.g. KES 15 per unit')),
+        TextField(
+            controller: _elecCost,
+            decoration:
+                const InputDecoration(hintText: 'e.g. KES 15 per unit')),
       ],
       _lbl(context, 'WiFi'),
-      _seg(context, wifiOptions, (L['wifi'] ?? '').toString(), (v) => setState(() => L['wifi'] = v)),
+      _seg(context, wifiOptions, (L['wifi'] ?? '').toString(),
+          (v) => setState(() => L['wifi'] = v)),
       if (L['wifi'] == 'Available but paid separately') ...[
         _lbl(context, 'WiFi cost'),
-        TextField(controller: _wifiCost, decoration: const InputDecoration(hintText: 'e.g. KES 500 per month')),
+        TextField(
+            controller: _wifiCost,
+            decoration:
+                const InputDecoration(hintText: 'e.g. KES 500 per month')),
         _lbl(context, 'WiFi provider'),
-        TextField(controller: _wifiProvider, decoration: const InputDecoration(hintText: 'e.g. Faiba, Safaricom')),
+        TextField(
+            controller: _wifiProvider,
+            decoration:
+                const InputDecoration(hintText: 'e.g. Faiba, Safaricom')),
       ],
       _lbl(context, 'Garbage'),
-      _seg(context, garbageOptions, (L['garbage'] ?? '').toString(), (v) => setState(() => L['garbage'] = v)),
+      _seg(context, garbageOptions, (L['garbage'] ?? '').toString(),
+          (v) => setState(() => L['garbage'] = v)),
       _lbl(context, 'Backup power'),
-      _seg(context, backupOptions, (L['backup'] ?? '').toString(), (v) => setState(() => L['backup'] = v)),
+      _seg(context, backupOptions, (L['backup'] ?? '').toString(),
+          (v) => setState(() => L['backup'] = v)),
     ]);
   }
 
   Widget _inside(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Bathrooms'),
-      _seg(context, bathCounts, (L['bath'] ?? '1').toString(), (v) => setState(() => L['bath'] = v)),
+      _seg(context, bathCounts, (L['bath'] ?? '1').toString(),
+          (v) => setState(() => L['bath'] = v)),
       _lbl(context, 'Bathroom inside (self-contained)?'),
       _yn(context, 'ensuite'),
       _lbl(context, 'Own kitchen?'),
@@ -504,7 +721,8 @@ class _CreateScreenState extends State<CreateScreen> {
       _lbl(context, 'Balcony?'),
       _yn(context, 'balcony'),
       _lbl(context, 'Floor finish'),
-      _seg(context, ['Tiled', 'Concrete', 'Slats'], (L['tile'] ?? '').toString(), (v) => setState(() => L['tile'] = v)),
+      _seg(context, ['Tiled', 'Concrete', 'Slats'],
+          (L['tile'] ?? '').toString(), (v) => setState(() => L['tile'] = v)),
       _lbl(context, 'Ceiling?'),
       _yn(context, 'ceiling'),
       _lbl(context, 'Built-in wardrobes?'),
@@ -527,17 +745,29 @@ class _CreateScreenState extends State<CreateScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: (L['security'] as List).contains(s) ? t0(context) : t0card(context),
+                color: (L['security'] as List).contains(s)
+                    ? t0(context)
+                    : t0card(context),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: (L['security'] as List).contains(s) ? t0(context) : t0line(context), width: 1.4),
+                border: Border.all(
+                    color: (L['security'] as List).contains(s)
+                        ? t0(context)
+                        : t0line(context),
+                    width: 1.4),
               ),
-              child: Text(s, style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700,
-                  color: (L['security'] as List).contains(s) ? Colors.white : t0ink2(context))),
+              child: Text(s,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: (L['security'] as List).contains(s)
+                          ? Colors.white
+                          : t0ink2(context))),
             ),
           ),
       ]),
       _lbl(context, 'Preferred tenants'),
-      _seg(context, tenantOptions, (L['tenantPref'] ?? '').toString(), (v) => setState(() => L['tenantPref'] = v)),
+      _seg(context, tenantOptions, (L['tenantPref'] ?? '').toString(),
+          (v) => setState(() => L['tenantPref'] = v)),
       _lbl(context, 'Pets allowed?'),
       _yn(context, 'pets'),
     ]);
@@ -550,7 +780,8 @@ class _CreateScreenState extends State<CreateScreen> {
 
   Widget _availability(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      _lbl(context, 'Units vacant right now', 'this is what renters see — keep it true'),
+      _lbl(context, 'Units vacant right now',
+          'this is what renters see — keep it true'),
       SizedBox(
         width: 110,
         child: TextField(
@@ -563,21 +794,33 @@ class _CreateScreenState extends State<CreateScreen> {
         ),
       ),
       const SizedBox(height: 5),
-      Text('0 = all occupied (the listing shows ALL OCCUPIED). Vacancy-first: write only how many are free NOW.',
-          style: TextStyle(fontSize: 12, color: T(Theme.of(context).brightness).ink3, height: 1.5)),
+      Text(
+          '0 = all occupied (the listing shows ALL OCCUPIED). Vacancy-first: write only how many are free NOW.',
+          style: TextStyle(
+              fontSize: 12,
+              color: T(Theme.of(context).brightness).ink3,
+              height: 1.5)),
       _lbl(context, 'Available from'),
-      _seg(context, availabilityOptions, (L['availableFrom'] ?? '').toString(), (v) {
+      _seg(context, availabilityOptions, (L['availableFrom'] ?? '').toString(),
+          (v) {
         setState(() => L['availableFrom'] = v);
         if (v == 'Pick a date…') _pickDate(context);
       }),
       if (L['availableFrom'] == 'Pick a date…' && _availDate.text.isNotEmpty)
         Padding(
           padding: const EdgeInsets.only(top: 6),
-          child: Text('Date: ${_availDate.text}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
+          child: Text('Date: ${_availDate.text}',
+              style:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
         ),
-      _lbl(context, 'Contact phone on the listing', 'defaults to your WhatsApp number'),
-      TextField(controller: _phone, keyboardType: TextInputType.phone,
-          decoration: InputDecoration(hintText: context.read<AppState>().user?.phone ?? '0712 345 678')),
+      _lbl(context, 'Contact phone on the listing',
+          'defaults to your WhatsApp number'),
+      TextField(
+          controller: _phone,
+          keyboardType: TextInputType.phone,
+          decoration: InputDecoration(
+              hintText:
+                  context.read<AppState>().user?.phone ?? '0712 345 678')),
     ]);
   }
 
@@ -589,7 +832,8 @@ class _CreateScreenState extends State<CreateScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
     if (d != null) {
-      setState(() => _availDate.text = '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}');
+      setState(() => _availDate.text =
+          '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}');
     }
   }
 
@@ -597,11 +841,13 @@ class _CreateScreenState extends State<CreateScreen> {
     final t = T(Theme.of(context).brightness);
     final photos = (L['photos'] as List).cast<String>();
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text('Add 3–8 clear daylight photos. Renters trust photos of the gate, the door, the bathroom and the kitchen.',
+      Text(
+          'Add 3–8 clear daylight photos. Renters trust photos of the gate, the door, the bathroom and the kitchen.',
           style: TextStyle(fontSize: 13, color: t.ink2, height: 1.5)),
       const SizedBox(height: 12),
       GridView.builder(
-        shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 3, mainAxisSpacing: 8, crossAxisSpacing: 8),
         itemCount: photos.length + (photos.length < 8 ? 1 : 0),
@@ -610,13 +856,21 @@ class _CreateScreenState extends State<CreateScreen> {
             return GestureDetector(
               onTap: _addPhotos,
               child: Container(
-                decoration: BoxDecoration(color: t.card2, borderRadius: BorderRadius.circular(12),
+                decoration: BoxDecoration(
+                    color: t.card2,
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: t.line, width: 1.4)),
-                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Icon(Icons.add_a_photo_outlined, size: 24, color: t.pine),
-                  const SizedBox(height: 5),
-                  Text('Add photo', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: t.ink2)),
-                ]),
+                child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add_a_photo_outlined, size: 24, color: t.pine),
+                      const SizedBox(height: 5),
+                      Text('Add photo',
+                          style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: t.ink2)),
+                    ]),
               ),
             );
           }
@@ -624,36 +878,49 @@ class _CreateScreenState extends State<CreateScreen> {
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: SizedBox.expand(
-                child: i < (L['thumbs'] as List).length && ((L['thumbs'] as List)[i] as String).isNotEmpty
-                    ? DataImg((L['thumbs'] as List)[i] as String, cachePx: 300, fit: BoxFit.cover)
+                child: i < (L['thumbs'] as List).length &&
+                        ((L['thumbs'] as List)[i] as String).isNotEmpty
+                    ? DataImg((L['thumbs'] as List)[i] as String,
+                        cachePx: 300, fit: BoxFit.cover)
                     : DataImg(photos[i], cachePx: 300, fit: BoxFit.cover),
               ),
             ),
             Positioned(
-              top: 4, right: 4,
+              top: 4,
+              right: 4,
               child: GestureDetector(
                 onTap: () => _removePhoto(i),
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(shape: BoxShape.circle, color: Colors.black54),
+                  decoration: const BoxDecoration(
+                      shape: BoxShape.circle, color: Colors.black54),
                   child: const Icon(Icons.close, size: 13, color: Colors.white),
                 ),
               ),
             ),
             if (i == 0)
               Positioned(
-                left: 4, bottom: 4,
+                left: 4,
+                bottom: 4,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
-                  decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(6)),
-                  child: const Text('Cover', style: TextStyle(color: Colors.white, fontSize: 9.5, fontWeight: FontWeight.w800)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+                  decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(6)),
+                  child: const Text('Cover',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w800)),
                 ),
               ),
           ]);
         },
       ),
       const SizedBox(height: 10),
-      Text('Photos are compressed on your phone before upload — posting works even on slow bundles.',
+      Text(
+          'Photos are compressed on your phone before upload — posting works even on slow bundles.',
           style: TextStyle(fontSize: 12, color: t.ink3)),
     ]);
   }
