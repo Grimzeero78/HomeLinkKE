@@ -44,7 +44,10 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       snack(context, 'Welcome, ${st.user!.name.isNotEmpty ? st.user!.name : st.user!.username}!');
       shellTab.value = 0;
-      Navigator.pop(context);
+      // Grab the navigator BEFORE popping — popping the last route would leave a
+      // black screen, and a disposed context cannot push/pop at all.
+      final nav = Navigator.of(context);
+      if (nav.canPop()) nav.pop();
     } catch (e) {
       if (mounted) snack(context, e.toString().replaceFirst('ApiException: ', ''), error: true);
     } finally {
@@ -68,8 +71,10 @@ class _AuthScreenState extends State<AuthScreen> {
       if (!mounted) return;
       await st.signIn((r['token'] ?? '').toString(), User.fromJson((r['user'] ?? {}) as Map<String, dynamic>));
       if (!mounted) return;
-      Navigator.pop(context);
-      Navigator.push(context, MaterialPageRoute(builder: (_) => const WelcomeScreen()));
+      // Grab the navigator before popping (see _doLogin).
+      final nav = Navigator.of(context);
+      if (nav.canPop()) nav.pop();
+      nav.push(MaterialPageRoute(builder: (_) => const WelcomeScreen()));
     } catch (e) {
       if (mounted) snack(context, e.toString().replaceFirst('ApiException: ', ''), error: true);
     } finally {
