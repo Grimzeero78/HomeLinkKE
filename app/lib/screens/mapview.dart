@@ -19,7 +19,7 @@ import '../util.dart';
 import '../widgets.dart';
 import 'listing.dart';
 
-const MAP_RADIUS = <String, int>{'1': 1000, '3': 3000, '5': 5000, '10': 10000, '25': 25000, '': 0};
+const mapRadius = <String, int>{'1': 1000, '3': 3000, '5': 5000, '10': 10000, '25': 25000, '': 0};
 
 class MapScreen extends StatefulWidget {
   const MapScreen({super.key});
@@ -98,7 +98,7 @@ class _MapScreenState extends State<MapScreen> {
       _shown = _items;
       return;
     }
-    final lim = MAP_RADIUS[_rad] ?? 0;
+    final lim = mapRadius[_rad] ?? 0;
     _shown = _items.where((l) {
       if (!l.hasLocation) return false;
       final d = distMeters(_center!.latitude, _center!.longitude, l.lat!, l.lng!);
@@ -128,11 +128,11 @@ class _MapScreenState extends State<MapScreen> {
     if (raw.isEmpty) return;
     final low = raw.toLowerCase();
     Town? hit;
-    for (final tw in TOWNS) {
+    for (final tw in towns) {
       if (tw.n.toLowerCase() == low) { hit = tw; break; }
     }
-    hit ??= TOWNS.where((tw) => tw.n.toLowerCase().startsWith(low)).firstOrNull;
-    hit ??= TOWNS.where((tw) => tw.n.toLowerCase().contains(low)).firstOrNull;
+    hit ??= towns.where((tw) => tw.n.toLowerCase().startsWith(low)).firstOrNull;
+    hit ??= towns.where((tw) => tw.n.toLowerCase().contains(low)).firstOrNull;
     if (hit == null) {
       // Nominatim bounded to Kenya (same fallback as the website)
       try {
@@ -276,9 +276,9 @@ class _MapScreenState extends State<MapScreen> {
     final st = context.watch<AppState>();
     final start = st.myLat != null
         ? ll.LatLng(st.myLat!, st.myLng!)
-        : (TOWNS.where((x) => x.n == st.myTown).firstOrNull != null
-            ? ll.LatLng(TOWNS.where((x) => x.n == st.myTown).first.lat, TOWNS.where((x) => x.n == st.myTown).first.lng)
-            : ll.LatLng(KENYA_CENTER.lat, KENYA_CENTER.lng));
+        : (towns.where((x) => x.n == st.myTown).firstOrNull != null
+            ? ll.LatLng(towns.where((x) => x.n == st.myTown).first.lat, towns.where((x) => x.n == st.myTown).first.lng)
+            : ll.LatLng(kenyaCenter.lat, kenyaCenter.lng));
 
     return Scaffold(
       backgroundColor: t.bg,
@@ -324,7 +324,7 @@ class _MapScreenState extends State<MapScreen> {
               const SizedBox(width: 7),
               Center(child: Text('Within:', style: TextStyle(fontSize: 11.5, color: t.ink3))),
               const SizedBox(width: 5),
-              for (final r in MAP_RADIUS.keys)
+              for (final r in mapRadius.keys)
                 Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: GestureDetector(

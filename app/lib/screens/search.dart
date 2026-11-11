@@ -60,7 +60,7 @@ class _SearchScreenState extends State<SearchScreen> {
   // typing a town's exact name IS a location search (web goSearch())
   void _goSearch() {
     final typed = _qCtrl.text.trim();
-    final t = TOWNS.where((x) => x.n.toLowerCase() == typed.toLowerCase()).firstOrNull;
+    final t = towns.where((x) => x.n.toLowerCase() == typed.toLowerCase()).firstOrNull;
     if (t != null) {
       _town = t.n;
       _q = '';
@@ -253,7 +253,7 @@ class _SearchScreenState extends State<SearchScreen> {
           scrollDirection: Axis.horizontal,
           child: Row(children: [
             _chip(context, 'Anywhere in Kenya', _town.isEmpty, () { setState(() => _town = ''); context.read<AppState>().setMyTown(''); _load(); }),
-            for (final tw in TOWNS)
+            for (final tw in towns)
               Padding(
                 padding: const EdgeInsets.only(left: 7),
                 child: _chip(context, tw.n, _town == tw.n, () {
@@ -265,7 +265,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ]),
         ),
         label('Property type'),
-        _chipWrap(context, TYPES, _ptype, (v) { setState(() => _ptype = v); _load(); }),
+        _chipWrap(context, propertyTypes, _ptype, (v) { setState(() => _ptype = v); _load(); }),
         label('Price (KES)'),
         Row(children: [
           Expanded(child: TextField(

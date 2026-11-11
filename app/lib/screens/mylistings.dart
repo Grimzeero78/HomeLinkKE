@@ -95,7 +95,7 @@ class _MyListingsScreenState extends State<MyListingsScreen> {
               style: TextStyle(fontSize: 13.2, fontWeight: FontWeight.w600, color: C.emberDeep, height: 1.5),
               children: const [
                 TextSpan(text: 'Boost gets you seen: ', style: TextStyle(fontWeight: FontWeight.w800)),
-                TextSpan(text: 'KES $BOOST_AMOUNT_KES pins a listing at the top of results in its town for $BOOST_DAYS days — renters browsing that town see it first. Tap Boost on any listing below.'),
+                TextSpan(text: 'KES $boostAmountKes pins a listing at the top of results in its town for $boostDays days — renters browsing that town see it first. Tap Boost on any listing below.'),
               ]))),
             const SizedBox(height: 14),
             if (_loading)

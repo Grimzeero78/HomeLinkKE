@@ -77,7 +77,7 @@ class _BoostScreenState extends State<BoostScreen> {
       if (!mounted) return;
       snack(context, 'Sent! The admin will confirm your payment shortly.');
       Notifs.showAccount('Boost requested',
-          'Your KES $BOOST_AMOUNT_KES boost request is waiting for admin confirmation.');
+          'Your KES $boostAmountKes boost request is waiting for admin confirmation.');
       _load();
     } catch (e) {
       if (mounted) snack(context, e.toString().replaceFirst('ApiException: ', ''), error: true);
@@ -120,13 +120,13 @@ class _BoostScreenState extends State<BoostScreen> {
             Notice(Icons.hourglass_top, 'Payment received — waiting for the admin to confirm your M-Pesa payment. Your boost starts right after confirmation.', kind: 'o'),
           if (!boosted && !_pending) ...[
             _block(context, 'What a boost does', Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Your listing jumps to the top of results in $town with an orange BOOSTED badge for $BOOST_DAYS days — on the home page, search results and the map for everyone browsing $town. Renters in other towns are not affected unless they search $town themselves. Boosted listings get the most views and chats.',
+              Text('Your listing jumps to the top of results in $town with an orange BOOSTED badge for $boostDays days — on the home page, search results and the map for everyone browsing $town. Renters in other towns are not affected unless they search $town themselves. Boosted listings get the most views and chats.',
                   style: TextStyle(fontSize: 13, color: t.ink2, height: 1.55)),
             ])),
             const SizedBox(height: 12),
-            _block(context, 'How to pay (KES $BOOST_AMOUNT_KES / $BOOST_DAYS days)', Column(children: [
+            _block(context, 'How to pay (KES $boostAmountKes / $boostDays days)', Column(children: [
               _payStep(context, '1', 'Open M-Pesa', 'Go to Send Money (Pochi / Send to mobile).'),
-              _payStep(context, '2', 'Send KES $BOOST_AMOUNT_KES', "To number ${st.paybillNumber} — ${st.paybillName}."),
+              _payStep(context, '2', 'Send KES $boostAmountKes', "To number ${st.paybillNumber} — ${st.paybillName}."),
               _payStep(context, '3', 'Confirm below', 'Enter the M-Pesa confirmation code or the name you sent from, then tap "I have sent the money". The admin will activate your boost.'),
             ])),
             const SizedBox(height: 14),

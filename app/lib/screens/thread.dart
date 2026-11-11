@@ -277,7 +277,7 @@ class _ThreadScreenState extends State<ThreadScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             children: [
-              for (final q in st.user?.isLandlord == true ? QR_LANDLORD : QR_STUDENT)
+              for (final q in st.user?.isLandlord == true ? quickLandlordReplies : quickStudentQuestions)
                 Padding(
                   padding: const EdgeInsets.only(right: 7),
                   child: ActionChip(

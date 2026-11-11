@@ -100,7 +100,7 @@ class _CreateScreenState extends State<CreateScreen> {
       if (l['lat'] != null && l['lng'] != null) {
         _pin = ll.LatLng((l['lat'] as num).toDouble(), (l['lng'] as num).toDouble());
       }
-      final tw = TOWNS.where((x) => x.n == (l['town'] ?? '')).firstOrNull;
+      final tw = towns.where((x) => x.n == (l['town'] ?? '')).firstOrNull;
       _townSel = tw;
       setState(() => _loadingExisting = false);
     } catch (e) {
@@ -165,7 +165,7 @@ class _CreateScreenState extends State<CreateScreen> {
         await st.api.createListing(L);
         if (!mounted) return;
         snack(context, 'Listing posted!');
-        Notifs.showAccount('Listing posted', '"${L['title']}" is now live. Boost it for KES $BOOST_AMOUNT_KES to get seen first.');
+        Notifs.showAccount('Listing posted', '"${L['title']}" is now live. Boost it for KES $boostAmountKes to get seen first.');
       }
       Navigator.pop(context);
     } catch (e) {
@@ -342,7 +342,7 @@ class _CreateScreenState extends State<CreateScreen> {
       TextField(controller: _title, maxLength: 90,
           decoration: const InputDecoration(hintText: 'e.g. Clean bedsitter near Chuka University gate')),
       _lbl(context, 'Property type'),
-      _seg(context, TYPES, (L['ptype'] ?? '').toString(), (v) => setState(() => L['ptype'] = v)),
+      _seg(context, propertyTypes, (L['ptype'] ?? '').toString(), (v) => setState(() => L['ptype'] = v)),
       _lbl(context, 'How many units in the compound?', 'rooms / houses total'),
       SizedBox(
         width: 110,
@@ -356,14 +356,14 @@ class _CreateScreenState extends State<CreateScreen> {
         ),
       ),
       _lbl(context, 'Furnishing'),
-      _seg(context, FURN, (L['furnishing'] ?? '').toString(), (v) => setState(() => L['furnishing'] = v)),
+      _seg(context, furnishingOptions, (L['furnishing'] ?? '').toString(), (v) => setState(() => L['furnishing'] = v)),
       _lbl(context, 'How many floors does the building have?'),
       SizedBox(
         height: 44,
         child: DropdownButtonFormField<String>(
           initialValue: (L['floor'] ?? 'Ground').toString(),
           decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
-          items: [for (final f in FLOORS) DropdownMenuItem(value: f, child: Text(f == 'Ground' ? 'Ground only' : f))],
+          items: [for (final f in floorOptions) DropdownMenuItem(value: f, child: Text(f == 'Ground' ? 'Ground only' : f))],
           onChanged: (v) => setState(() => L['floor'] = v),
         ),
       ),
@@ -383,7 +383,7 @@ class _CreateScreenState extends State<CreateScreen> {
           initialValue: _townSel,
           isExpanded: true,
           decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
-          items: [for (final tw in TOWNS) DropdownMenuItem(value: tw, child: Text(tw.n))],
+          items: [for (final tw in towns) DropdownMenuItem(value: tw, child: Text(tw.n))],
           onChanged: (v) => setState(() => _townSel = v),
         ),
       ),
@@ -392,7 +392,7 @@ class _CreateScreenState extends State<CreateScreen> {
       _lbl(context, 'Nearest landmark'),
       TextField(controller: _landmark, decoration: const InputDecoration(hintText: 'e.g. next to Chuka Law Courts')),
       _lbl(context, 'Road access'),
-      _seg(context, ROADS, (L['road'] ?? '').toString(), (v) => setState(() => L['road'] = v)),
+      _seg(context, roadOptions, (L['road'] ?? '').toString(), (v) => setState(() => L['road'] = v)),
       _lbl(context, 'Pin the exact spot on the map', 'renters see this pin and get directions to it'),
       ClipRRect(
         borderRadius: BorderRadius.circular(14),
@@ -431,7 +431,7 @@ class _CreateScreenState extends State<CreateScreen> {
   ll.LatLng st0(BuildContext context) {
     final st = context.read<AppState>();
     if (st.myLat != null) return ll.LatLng(st.myLat!, st.myLng!);
-    final tw = _townSel ?? TOWNS.first;
+    final tw = _townSel ?? towns.first;
     return ll.LatLng(tw.lat, tw.lng);
   }
 
@@ -441,7 +441,7 @@ class _CreateScreenState extends State<CreateScreen> {
       TextField(controller: _rent, keyboardType: TextInputType.number,
           decoration: const InputDecoration(hintText: 'e.g. 6500')),
       _lbl(context, 'Billing period'),
-      _seg(context, PERIODS, (L['period'] ?? '').toString(), (v) => setState(() => L['period'] = v)),
+      _seg(context, periods, (L['period'] ?? '').toString(), (v) => setState(() => L['period'] = v)),
       _lbl(context, 'Deposit (KES)', '0 if none'),
       TextField(controller: _deposit, keyboardType: TextInputType.number,
           decoration: const InputDecoration(hintText: 'e.g. 6500')),
@@ -459,7 +459,7 @@ class _CreateScreenState extends State<CreateScreen> {
   Widget _utilities(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Water'),
-      _seg(context, WATER, (L['water'] ?? '').toString(), (v) => setState(() => L['water'] = v)),
+      _seg(context, waterOptions, (L['water'] ?? '').toString(), (v) => setState(() => L['water'] = v)),
       if (L['water'] == 'Pay separately' || L['water'] == 'Rationed') ...[
         _lbl(context, 'Water cost'),
         TextField(controller: _waterCost, decoration: const InputDecoration(hintText: 'e.g. KES 200 per 20L jerrican')),
@@ -471,13 +471,13 @@ class _CreateScreenState extends State<CreateScreen> {
       _lbl(context, 'Storage tank?'),
       _yn(context, 'waterTank'),
       _lbl(context, 'Electricity'),
-      _seg(context, ELEC, (L['elec'] ?? '').toString(), (v) => setState(() => L['elec'] = v)),
+      _seg(context, electricityOptions, (L['elec'] ?? '').toString(), (v) => setState(() => L['elec'] = v)),
       if (L['elec'] == 'Shared meter') ...[
         _lbl(context, 'Electricity cost'),
         TextField(controller: _elecCost, decoration: const InputDecoration(hintText: 'e.g. KES 15 per unit')),
       ],
       _lbl(context, 'WiFi'),
-      _seg(context, WIFI, (L['wifi'] ?? '').toString(), (v) => setState(() => L['wifi'] = v)),
+      _seg(context, wifiOptions, (L['wifi'] ?? '').toString(), (v) => setState(() => L['wifi'] = v)),
       if (L['wifi'] == 'Available but paid separately') ...[
         _lbl(context, 'WiFi cost'),
         TextField(controller: _wifiCost, decoration: const InputDecoration(hintText: 'e.g. KES 500 per month')),
@@ -485,16 +485,16 @@ class _CreateScreenState extends State<CreateScreen> {
         TextField(controller: _wifiProvider, decoration: const InputDecoration(hintText: 'e.g. Faiba, Safaricom')),
       ],
       _lbl(context, 'Garbage'),
-      _seg(context, GARBAGE, (L['garbage'] ?? '').toString(), (v) => setState(() => L['garbage'] = v)),
+      _seg(context, garbageOptions, (L['garbage'] ?? '').toString(), (v) => setState(() => L['garbage'] = v)),
       _lbl(context, 'Backup power'),
-      _seg(context, BACKUP, (L['backup'] ?? '').toString(), (v) => setState(() => L['backup'] = v)),
+      _seg(context, backupOptions, (L['backup'] ?? '').toString(), (v) => setState(() => L['backup'] = v)),
     ]);
   }
 
   Widget _inside(BuildContext context) {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Bathrooms'),
-      _seg(context, BATHS, (L['bath'] ?? '1').toString(), (v) => setState(() => L['bath'] = v)),
+      _seg(context, bathCounts, (L['bath'] ?? '1').toString(), (v) => setState(() => L['bath'] = v)),
       _lbl(context, 'Bathroom inside (self-contained)?'),
       _yn(context, 'ensuite'),
       _lbl(context, 'Own kitchen?'),
@@ -518,7 +518,7 @@ class _CreateScreenState extends State<CreateScreen> {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       _lbl(context, 'Security'),
       Wrap(spacing: 7, runSpacing: 7, children: [
-        for (final s in SECURITY)
+        for (final s in securityOptions)
           GestureDetector(
             onTap: () {
               final cur = (L['security'] as List).cast<String>();
@@ -537,7 +537,7 @@ class _CreateScreenState extends State<CreateScreen> {
           ),
       ]),
       _lbl(context, 'Preferred tenants'),
-      _seg(context, TENANTS, (L['tenantPref'] ?? '').toString(), (v) => setState(() => L['tenantPref'] = v)),
+      _seg(context, tenantOptions, (L['tenantPref'] ?? '').toString(), (v) => setState(() => L['tenantPref'] = v)),
       _lbl(context, 'Pets allowed?'),
       _yn(context, 'pets'),
     ]);
@@ -566,7 +566,7 @@ class _CreateScreenState extends State<CreateScreen> {
       Text('0 = all occupied (the listing shows ALL OCCUPIED). Vacancy-first: write only how many are free NOW.',
           style: TextStyle(fontSize: 12, color: T(Theme.of(context).brightness).ink3, height: 1.5)),
       _lbl(context, 'Available from'),
-      _seg(context, AVAIL_OPTIONS, (L['availableFrom'] ?? '').toString(), (v) {
+      _seg(context, availabilityOptions, (L['availableFrom'] ?? '').toString(), (v) {
         setState(() => L['availableFrom'] = v);
         if (v == 'Pick a date…') _pickDate(context);
       }),

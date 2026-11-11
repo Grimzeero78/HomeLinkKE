@@ -107,7 +107,7 @@ class _ListingScreenState extends State<ListingScreen> {
       Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen()));
       return;
     }
-    String? reason = REPORT_REASONS.first;
+    String? reason = reportReasons.first;
     final note = TextEditingController();
     final ok = await showModalBottomSheet<bool>(
       context: context, isScrollControlled: true,
@@ -118,7 +118,7 @@ class _ListingScreenState extends State<ListingScreen> {
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
             initialValue: reason,
-            items: [for (final r in REPORT_REASONS) DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 13.5)))],
+            items: [for (final r in reportReasons) DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 13.5)))],
             onChanged: (v) => setM(() => reason = v),
           ),
           const SizedBox(height: 12),
@@ -200,7 +200,7 @@ class _ListingScreenState extends State<ListingScreen> {
                   children: [
                     const TextSpan(text: 'This is your listing. ', style: TextStyle(fontWeight: FontWeight.w800)),
                     TextSpan(text: 'Get seen first in ${l.town.isEmpty ? 'your town' : l.town} — '),
-                    TextSpan(text: 'Boost it for KES $BOOST_AMOUNT_KES / $BOOST_DAYS days', style: const TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.w800)),
+                    TextSpan(text: 'Boost it for KES $boostAmountKes / $boostDays days', style: const TextStyle(decoration: TextDecoration.underline, fontWeight: FontWeight.w800)),
                     TextSpan(text: '. Renters browsing ${l.town.isEmpty ? 'your town' : l.town} will see it on top.'),
                   ])),
                 ),

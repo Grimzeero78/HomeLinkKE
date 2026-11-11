@@ -60,7 +60,7 @@ class WelcomeScreen extends StatelessWidget {
       _block(context, 'Your 4 steps to renting out faster', _list(context, [
         ('Get verified', 'Profile → verification: upload your ID and an ownership photo. The admin approves it, you earn the green badge and 5 listings instead of 2. Verified landlords get more chats.'),
         ('Post your house', 'tap Post listing: 8 quick steps. Pick the town, pin your exact spot on the map, add 3+ clear daylight photos.'),
-        ('Boost for KES $BOOST_AMOUNT_KES', 'your listing sits at the top for $BOOST_DAYS days for every renter browsing your town. Pay by M-Pesa, enter the code, and the admin turns it on.'),
+        ('Boost for KES $boostAmountKes', 'your listing sits at the top for $boostDays days for every renter browsing your town. Pay by M-Pesa, enter the code, and the admin turns it on.'),
         ('Reply fast', 'houses whose landlord answers quickly rent much faster. Chats land in your Chats tab.'),
       ])),
       const SizedBox(height: 16),

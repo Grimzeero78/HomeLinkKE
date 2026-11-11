@@ -11,7 +11,7 @@ class Town {
 
 // Kenya gazetteer — the towns the app browses, targets boosts and searches first.
 // big:true = shown as a chip on the home page (same list as the website).
-const TOWNS = <Town>[
+const towns = <Town>[
   Town('Nairobi', -1.2864, 36.8172, big: true),
   Town('Mombasa', -4.0435, 39.6682, big: true),
   Town('Kisumu', -0.0917, 34.7680, big: true),
@@ -71,39 +71,39 @@ const TOWNS = <Town>[
   Town('Moyale', 3.5266, 39.0562),
 ];
 
-const KENYA_CENTER = (lat: -0.0236, lng: 37.9062); // geographic centre of Kenya
+const kenyaCenter = (lat: -0.0236, lng: 37.9062); // geographic centre of Kenya
 
-const TYPES = [
+const propertyTypes = [
   'Bedsitter', 'Single Room', 'Studio', '1 Bedroom', '2 Bedroom', '3 Bedroom',
   '4+ Bedroom', 'Bungalow', 'Maisonette'
 ];
-const FURN = ['Furnished', 'Semi-furnished', 'Unfurnished'];
-const PERIODS = ['Per Month', 'Per Semester'];
-const WATER = ['Included in rent', 'Pay separately', 'Rationed'];
-const ELEC = ['Included in rent', 'Own token meter', 'Shared meter', 'Prepaid'];
-const WIFI = ['Included in rent', 'Available but paid separately', 'Not available'];
-const GARBAGE = ['Included', 'Not included', 'Paid separately'];
-const BACKUP = ['None', 'Solar', 'Generator'];
-const BATHS = ['1', '2', '3', '4+']; // bathroom COUNT
-const TENANTS = ['Anyone', 'Students', 'Family', 'Singles / couples', 'Working professionals'];
-const ROADS = ['Tarmac', 'Murram', 'Footpath only'];
-const SECURITY = ['Guard', 'Gate lock', 'CCTV'];
-const FLOORS = ['Ground', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
-const AVAIL_OPTIONS = ['Available now', 'Within a week', 'Within a month', 'Next month', 'Pick a date…'];
-const REPORT_REASONS = [
+const furnishingOptions = ['Furnished', 'Semi-furnished', 'Unfurnished'];
+const periods = ['Per Month', 'Per Semester'];
+const waterOptions = ['Included in rent', 'Pay separately', 'Rationed'];
+const electricityOptions = ['Included in rent', 'Own token meter', 'Shared meter', 'Prepaid'];
+const wifiOptions = ['Included in rent', 'Available but paid separately', 'Not available'];
+const garbageOptions = ['Included', 'Not included', 'Paid separately'];
+const backupOptions = ['None', 'Solar', 'Generator'];
+const bathCounts = ['1', '2', '3', '4+']; // bathroom COUNT
+const tenantOptions = ['Anyone', 'Students', 'Family', 'Singles / couples', 'Working professionals'];
+const roadOptions = ['Tarmac', 'Murram', 'Footpath only'];
+const securityOptions = ['Guard', 'Gate lock', 'CCTV'];
+const floorOptions = ['Ground', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th', '10th'];
+const availabilityOptions = ['Available now', 'Within a week', 'Within a month', 'Next month', 'Pick a date…'];
+const reportReasons = [
   'Fake or scam listing', 'Unit is already taken', 'Wrong price or info',
   'Poster is not the landlord', 'Misleading photos', 'Other'
 ];
-const BOOST_AMOUNT_KES = 200;
-const BOOST_DAYS = 7;
+const boostAmountKes = 200;
+const boostDays = 7;
 
-const QR_STUDENT = [
+const quickStudentQuestions = [
   'Is it still available?',
   'Can I view it this weekend?',
   'What is the total monthly cost?',
   'Is water included in the rent?',
 ];
-const QR_LANDLORD = [
+const quickLandlordReplies = [
   'Yes, it is available.',
   'When would you like to come for viewing?',
   'Viewings: Mon–Sat, 8 AM – 6 PM.',

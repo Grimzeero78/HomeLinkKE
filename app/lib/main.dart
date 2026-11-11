@@ -105,7 +105,7 @@ class _Splash extends StatelessWidget {
             const SizedBox(height: 12),
             // web .splash-word: display font 600 22px white, "IN" 800 #ffd9b8
             Text.rich(
-              TextSpan(children: [
+              TextSpan(children: const [
                 TextSpan(text: 'HUNT', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),
                 TextSpan(text: 'IN', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w800, color: Color(0xFFFFD9B8), letterSpacing: .45)),
                 TextSpan(text: 'KE', style: TextStyle(fontFamily: kDisp, fontSize: 22, fontWeight: FontWeight.w600, color: Colors.white, letterSpacing: .45)),

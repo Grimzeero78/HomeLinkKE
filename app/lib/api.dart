@@ -17,16 +17,14 @@ class ApiException implements Exception {
 }
 
 class Api {
-  Api(this._token);
-  String? _token;
+  Api(this.token);
+  String? token;
   final http.Client _c = http.Client();
 
-  String? get token => _token;
-  set token(String? t) => _token = t;
 
   Map<String, String> _h() {
     final h = <String, String>{'Content-Type': 'application/json'};
-    if (_token != null && _token!.isNotEmpty) h['Authorization'] = 'Bearer $_token';
+    if (token != null && token!.isNotEmpty) h['Authorization'] = 'Bearer $token';
     return h;
   }
 

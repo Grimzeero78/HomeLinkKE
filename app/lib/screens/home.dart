@@ -198,7 +198,7 @@ class _HomeScreenState extends State<HomeScreen> {
             spacing: 7, runSpacing: 7,
             children: [
               // pixel port of web .hero-chips .chip / .chip.on
-              for (final tw in TOWNS.where((x) => x.big))
+              for (final tw in towns.where((x) => x.big))
                 GestureDetector(
                   onTap: () => _openSearch(town: tw.n),
                   child: Container(
@@ -333,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
           TextSpan(text: '1. Get verified', style: TextStyle(fontWeight: FontWeight.w800)),
           TextSpan(text: ' — upload your ID and ownership proof in your Profile to earn the green badge and post up to 5 listings instead of 2.\n\n'),
           TextSpan(text: '2. Boost', style: TextStyle(fontWeight: FontWeight.w800)),
-          TextSpan(text: ' — KES $BOOST_AMOUNT_KES pins a listing at the top of results in your town for $BOOST_DAYS days.'),
+          TextSpan(text: ' — KES $boostAmountKes pins a listing at the top of results in your town for $boostDays days.'),
         ])),
         const SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, children: [

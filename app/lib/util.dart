@@ -45,7 +45,7 @@ String fmtDist(num m) {
 Town? nearestTown(double lat, double lng) {
   Town? best;
   var bd = double.infinity;
-  for (final t in TOWNS) {
+  for (final t in towns) {
     final d = distMeters(lat, lng, t.lat, t.lng);
     if (d < bd) { bd = d; best = t; }
   }
@@ -109,10 +109,10 @@ List<String> amenityTags(Map<String, dynamic> l) {
 }
 
 // ---------- image compression → data URLs (same pipeline as the website) ----------
-const IMG_RE = r'^data:image/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$';
+const imgRe = r'^data:image/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$';
 
 bool isImg(String? d) =>
-    d != null && d.length < 1200000 && RegExp(IMG_RE).hasMatch(d);
+    d != null && d.length < 1200000 && RegExp(imgRe).hasMatch(d);
 
 Future<String> compressToDataUrl(Uint8List bytes, {int maxKB = 260, int maxDim = 1400, int q = 78}) async {
   var quality = q;
