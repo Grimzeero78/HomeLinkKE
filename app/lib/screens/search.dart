@@ -241,7 +241,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _filterPanel(BuildContext context) {
     final t = T(Theme.of(context).brightness);
-    final label = (s) => Padding(
+    Padding label(s) => Padding(
           padding: const EdgeInsets.only(top: 16, bottom: 8),
           child: Text(s, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: t.ink)),
         );
@@ -327,7 +327,7 @@ class _SearchScreenState extends State<SearchScreen> {
         SizedBox(
           height: 44,
           child: DropdownButtonFormField<String>(
-            value: _sort,
+            initialValue: _sort,
             decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
             dropdownColor: t.card,
             items: const [

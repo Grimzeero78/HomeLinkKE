@@ -3,7 +3,6 @@
 // The website keeps hl_token / hl_town / hl_theme in localStorage;
 // the app keeps the same keys in SharedPreferences.
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';

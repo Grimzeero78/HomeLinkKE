@@ -7,13 +7,13 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'data.dart';
 
 // 'KES 12,500'
-String kes(num? n) => 'KES ' + (n ?? 0).round().toString().replaceAllMapped(
-    RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+String kes(num? n) => 'KES ${(n ?? 0).round().toString().replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',')}';
 
 // '12.5k' for map price chips
 String shortK(num n) {
   final v = n / 1000;
-  return (v >= 10 ? v.round().toString() : v.toStringAsFixed(1).replaceAll('.0', '')) + 'k';
+  return '${v >= 10 ? v.round().toString() : v.toStringAsFixed(1).replaceAll('.0', '')}k';
 }
 
 String perShort(String? p) =>
@@ -39,7 +39,7 @@ double distMeters(double lat1, double lng1, double lat2, double lng2) {
 String fmtDist(num m) {
   if (m < 950) return '${(m / 50).round() * 50} m';
   final km = m / 1000;
-  return km.toStringAsFixed(km < 9.5 ? 1 : 0).replaceAll('.0', '') + ' km';
+  return '${km.toStringAsFixed(km < 9.5 ? 1 : 0).replaceAll('.0', '')} km';
 }
 
 Town? nearestTown(double lat, double lng) {
@@ -88,9 +88,9 @@ List<String> parseSecurity(String? s) {
 // https://wa.me/254712345678?text=…
 String waLink(String? num, [String? text]) {
   var n = (num ?? '').replaceAll(RegExp(r'[\s+-]'), '');
-  if (n.startsWith('0')) n = '254' + n.substring(1);
+  if (n.startsWith('0')) n = '254${n.substring(1)}';
   var out = 'https://wa.me/$n';
-  if (text != null && text.isNotEmpty) out += '?text=' + Uri.encodeComponent(text);
+  if (text != null && text.isNotEmpty) out += '?text=${Uri.encodeComponent(text)}';
   return out;
 }
 
@@ -144,8 +144,8 @@ Future<String> thumbFrom(Uint8List bytes) async {
     final r = await FlutterImageCompress.compressWithList(
       bytes, minWidth: 340, minHeight: 340, quality: 60, format: CompressFormat.jpeg,
     );
-    return 'data:image/jpeg;base64,' + base64Encode(r);
+    return 'data:image/jpeg;base64,${base64Encode(r)}';
   } catch (_) {
-    return 'data:image/jpeg;base64,' + base64Encode(bytes);
+    return 'data:image/jpeg;base64,${base64Encode(bytes)}';
   }
 }

@@ -113,7 +113,7 @@ class _BoostScreenState extends State<BoostScreen> {
               style: TextStyle(fontSize: 13.2, fontWeight: FontWeight.w600, color: t.pineInk, height: 1.5),
               children: [
                 const TextSpan(text: 'This listing is boosted until ', style: TextStyle(fontWeight: FontWeight.w800)),
-                TextSpan(text: '${fmtDate(l.boostedUntil)}', style: const TextStyle(fontWeight: FontWeight.w800)),
+                TextSpan(text: fmtDate(l.boostedUntil), style: const TextStyle(fontWeight: FontWeight.w800)),
                 TextSpan(text: ' — renters browsing $town see it at the top.'),
               ]))),
           if (_pending)

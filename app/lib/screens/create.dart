@@ -361,7 +361,7 @@ class _CreateScreenState extends State<CreateScreen> {
       SizedBox(
         height: 44,
         child: DropdownButtonFormField<String>(
-          value: (L['floor'] ?? 'Ground').toString(),
+          initialValue: (L['floor'] ?? 'Ground').toString(),
           decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
           items: [for (final f in FLOORS) DropdownMenuItem(value: f, child: Text(f == 'Ground' ? 'Ground only' : f))],
           onChanged: (v) => setState(() => L['floor'] = v),
@@ -380,7 +380,7 @@ class _CreateScreenState extends State<CreateScreen> {
       SizedBox(
         height: 44,
         child: DropdownButtonFormField<Town>(
-          value: _townSel,
+          initialValue: _townSel,
           isExpanded: true,
           decoration: const InputDecoration(contentPadding: EdgeInsets.symmetric(horizontal: 12)),
           items: [for (final tw in TOWNS) DropdownMenuItem(value: tw, child: Text(tw.n))],

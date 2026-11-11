@@ -116,7 +116,7 @@ class _ListingScreenState extends State<ListingScreen> {
           const Text('Report this listing', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
           const SizedBox(height: 14),
           DropdownButtonFormField<String>(
-            value: reason,
+            initialValue: reason,
             items: [for (final r in REPORT_REASONS) DropdownMenuItem(value: r, child: Text(r, style: const TextStyle(fontSize: 13.5)))],
             onChanged: (v) => setM(() => reason = v),
           ),

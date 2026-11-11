@@ -363,10 +363,10 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const Text('Get more renters to your houses', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16.5)),
         const SizedBox(height: 8),
-        Text.rich(TextSpan(style: TextStyle(fontSize: 13, color: const Color(0xFFD8E8DD), height: 1.55), children: [
-          const TextSpan(text: '1. Get verified', style: TextStyle(fontWeight: FontWeight.w800)),
-          const TextSpan(text: ' — upload your ID and ownership proof in your Profile to earn the green badge and post up to 5 listings instead of 2.\n\n'),
-          const TextSpan(text: '2. Boost', style: TextStyle(fontWeight: FontWeight.w800)),
+        Text.rich(TextSpan(style: TextStyle(fontSize: 13, color: const Color(0xFFD8E8DD), height: 1.55), children: const [
+          TextSpan(text: '1. Get verified', style: TextStyle(fontWeight: FontWeight.w800)),
+          TextSpan(text: ' — upload your ID and ownership proof in your Profile to earn the green badge and post up to 5 listings instead of 2.\n\n'),
+          TextSpan(text: '2. Boost', style: TextStyle(fontWeight: FontWeight.w800)),
           TextSpan(text: ' — KES $BOOST_AMOUNT_KES pins a listing at the top of results in your town for $BOOST_DAYS days.'),
         ])),
         const SizedBox(height: 12),
