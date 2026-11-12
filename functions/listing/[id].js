@@ -10,7 +10,7 @@ const appUrlFor = id => base + '/#/listing/' + id;
 export async function onRequestGet({ env, params }) {
   const id = Number(Array.isArray(params.id) ? params.id[0] : params.id);
   const appUrl = appUrlFor(id || 0);
-  if (!id || id < 1) return page('<h1>Listing not found</h1>', 'Listing not found — HuntInKE', 'The listing may have been taken down.', 404);
+  if (!id || id < 1) return page('<h1>Listing not found</h1>', 'Listing not found — HuntInKE 254', 'The listing may have been taken down.', 404);
   // tags column is added by the API's schema migration — on an un-migrated DB the
   // full query would throw, so fall back to the same query without tags
   let l = null;
@@ -27,15 +27,15 @@ export async function onRequestGet({ env, params }) {
        FROM listings l JOIN users o ON o.id = l.ownerId
        WHERE l.id = ? AND l.status != 'REMOVED'`).bind(id).first();
   }
-  if (!l) return page('<h1>Listing not found</h1><p>It may have been taken down.</p>', 'Listing not found — HuntInKE', 'The listing may have been taken down.', 404);
+  if (!l) return page('<h1>Listing not found</h1><p>It may have been taken down.</p>', 'Listing not found — HuntInKE 254', 'The listing may have been taken down.', 404);
 
   const ph = await env.DB.prepare("SELECT COALESCE(NULLIF(thumb, ''), url) AS u FROM photos WHERE listingId = ? ORDER BY idx LIMIT 1").bind(id).first();
   const vacant = l.unitsVacant == null ? (l.status === 'TAKEN' ? 0 : Math.max(1, l.units || 1)) : Math.max(0, l.unitsVacant);
   const where = [l.town, l.area, l.landmark].filter(Boolean).join(', ');
-  const title = `${l.title} — ${kes(l.rent)}/month in ${l.town} | HuntInKE`;
+  const title = `${l.title} — ${kes(l.rent)}/month in ${l.town} | HuntInKE 254`;
   const desc = `${l.ptype} for rent in ${where}. ${kes(l.rent)} ${String(l.period || 'Per Month').toLowerCase()}. ` +
     (vacant > 0 ? `${vacant} vacant ${vacant === 1 ? 'unit' : 'units'} now. ` : 'Currently occupied. ') +
-    'Chat the landlord directly on HuntInKE — never pay before viewing.';
+    'Chat the landlord directly on HuntInKE 254 — never pay before viewing.';
   const tags = String(l.tags || '').split(',').map(t => t.trim()).filter(Boolean);
   const per = String(l.period || 'Per Month').toLowerCase().replace('per ', '');
 
@@ -53,8 +53,8 @@ ${ph && ph.u ? `<img src="${esc(ph.u)}" alt="${esc(l.title)} — ${esc(where)}" 
   <li>Vacant units: ${vacant > 0 ? vacant + ' of ' + Math.max(1, l.units || 1) : '0 — full'}</li>
 </ul>
 ${tags.length ? `<p>Tags: ${tags.map(t => `<span>${esc(t)}</span>`).join(', ')}</p>` : ''}
-<p><a class="cta" href="${appUrl}">Open this listing in HuntInKE — chat the landlord directly</a></p>
-<p class="foot">HuntInKE lists vacant houses, bedsitters and apartments across Kenya. <a href="${base}/">Browse all houses for rent in Kenya</a>. Never pay any deposit before you have physically viewed the house and met the landlord.</p>`;
+<p><a class="cta" href="${appUrl}">Open this listing in HuntInKE 254 — chat the landlord directly</a></p>
+<p class="foot">HuntInKE 254 lists vacant houses, bedsitters and apartments across Kenya. <a href="${base}/">Browse all houses for rent in Kenya</a>. Never pay any deposit before you have physically viewed the house and met the landlord.</p>`;
 
   const ld = {
     '@context': 'https://schema.org',
