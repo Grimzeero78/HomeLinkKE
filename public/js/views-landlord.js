@@ -18,8 +18,9 @@ async function viewMyListings() {
     <div class="notice notice-o" style="margin-bottom:14px">${ic('bolt')}<span><b>Boost gets you seen:</b> KES ${BOOST.amountKes} pins a listing at the top of results <b>in its town</b> for ${BOOST.days} days — renters browsing that town see it first. Tap <b>Boost</b> on any listing below.</span></div>
     ${items.length ? items.map(l => {
       const vac = vacInfo(l);
+      const hid = !!l.hidden;
       return `
-      <div class="row-card">
+      <div class="row-card" ${hid ? 'style="opacity:.66"' : ''}>
         <div class="row-top">
           <div style="display:flex;gap:11px;min-width:0">
             <div class="cph" style="width:64px;height:64px;border-radius:10px;overflow:hidden;flex:none;aspect-ratio:auto">
@@ -30,6 +31,7 @@ async function viewMyListings() {
               <div class="row-sub">${kes(l.rent)}/${perShort(l.period)} · ${esc(l.town || '')}${l.area ? ' · ' + esc(l.area) : ''} · ${l.views} views</div>
               <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
                 <span class="pill ${vac.full ? 'pill-full' : 'pill-vac'}">${vac.full ? ic('x') : ic('check')}${esc(vac.label)}</span>
+                ${hid ? `<span class="pill pill-muted">${ic('eyeoff')}Hidden — renters cannot see it</span>` : ''}
                 ${boosted(l) ? `<span class="pill pill-o">${ic('bolt')}Boosted till ${fmtDate(l.boostedUntil)}</span>` : ''}
               </div>
             </div>
@@ -38,8 +40,9 @@ async function viewMyListings() {
         <div class="row-acts">
           <a class="btn btn-outline btn-sm" href="#/listing/${l.id}">${ic('eye')} View</a>
           <a class="btn btn-outline btn-sm" href="#/edit/${l.id}">${ic('edit')} Edit</a>
-          <a class="btn btn-primary btn-sm" href="#/boost/${l.id}">${ic('bolt')} ${boosted(l) ? 'Boost again' : 'Boost'}</a>
-          <button class="btn btn-danger btn-sm" data-act="del" data-id="${l.id}">${ic('trash')}</button>
+          <button class="btn btn-outline btn-sm" data-act="hide" data-id="${l.id}" data-hid="${hid ? 1 : 0}" aria-label="${hid ? 'Show this listing to renters again' : 'Hide this listing from renters'}">${hid ? ic('eye') + ' Show' : ic('eyeoff') + ' Hide'}</button>
+          ${hid ? '' : `<a class="btn btn-primary btn-sm" href="#/boost/${l.id}">${ic('bolt')} ${boosted(l) ? 'Boost again' : 'Boost'}</a>`}
+          <button class="btn btn-danger btn-sm" data-act="del" data-id="${l.id}" aria-label="Delete this listing forever">${ic('trash')}</button>
         </div>
         <div class="vac-row" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
           <span style="font-size:12px;font-weight:700;color:var(--ink3)">VACANCY</span>
@@ -62,10 +65,26 @@ async function viewMyListings() {
     const res = await api('/listings/' + id + '/status', { body: { vacant: nv } });
     if (res.ok) { toast(res.unitsVacant > 0 ? 'Saved — ' + res.unitsVacant + ' vacant' : 'Saved — all occupied'); viewMyListings(); } else toast(res.error, true);
   });
+  v.querySelectorAll('[data-act="hide"]').forEach(b => b.onclick = () => {
+    const id = b.dataset.id, hid = b.dataset.hid === '1';
+    if (hid) {
+      // Show — reversible by design, no confirmation needed
+      api('/listings/' + id + '/visibility', { body: { hidden: false } }).then(res => {
+        if (res.ok) { toast('Listing is live again — renters can see it'); viewMyListings(); }
+        else toast(res.error, true);
+      });
+    } else {
+      confirmDlg('Hide this listing?', 'Renters will not see it anywhere — browse, search, map or its link. It stays right here on this page and you can bring it back with Show.', 'Hide', async () => {
+        const res = await api('/listings/' + id + '/visibility', { body: { hidden: true } });
+        if (res.ok) { toast('Listing hidden — only you can see it here'); viewMyListings(); }
+        else toast(res.error, true);
+      });
+    }
+  });
   v.querySelectorAll('[data-act="del"]').forEach(b => b.onclick = () =>
-    confirmDlg('Delete this listing?', 'It will be removed from HuntInKE. You cannot undo this.', 'Delete', async () => {
+    confirmDlg('Delete this listing forever?', 'Everything about it is wiped — the listing, its photos, its chats, favorites and boosts. There is no way back. If you only want it out of sight for a while, use Hide instead.', 'Delete forever', async () => {
       const res = await api('/listings/' + b.dataset.id, { method: 'DELETE' });
-      if (res.ok) { toast('Listing deleted'); viewMyListings(); } else toast(res.error, true);
+      if (res.ok) { toast('Listing deleted for good'); viewMyListings(); } else toast(res.error, true);
     }, true));
 }
 

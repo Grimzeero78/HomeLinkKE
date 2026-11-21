@@ -36,7 +36,8 @@ async function viewListing(id) {
   v.innerHTML = `
   <div class="detail-cols">
     <div class="detail-main">
-      ${r.isOwner && !boosted ? `<div class="notice notice-o" style="margin-bottom:10px">${ic('bolt')}<span><b>This is your listing.</b> Get seen first in ${esc(l.town || 'your town')} — <a href="#/boost/${l.id}" style="text-decoration:underline">Boost it for KES ${BOOST.amountKes} / ${BOOST.days} days</a>. Renters browsing ${esc(l.town || 'your town')} will see it on top.</span></div>` : ''}
+      ${r.isOwner && l.hidden ? `<div class="notice notice-r" style="margin-bottom:10px">${ic('eyeoff')}<span><b>This listing is hidden.</b> Renters cannot see it anywhere — browse, search, map or its link. Bring it back with the button on <a href="#/mylistings" style="text-decoration:underline">My listings</a>.</span></div>` : ''}
+      ${r.isOwner && !boosted && !l.hidden ? `<div class="notice notice-o" style="margin-bottom:10px">${ic('bolt')}<span><b>This is your listing.</b> Get seen first in ${esc(l.town || 'your town')} — <a href="#/boost/${l.id}" style="text-decoration:underline">Boost it for KES ${BOOST.amountKes} / ${BOOST.days} days</a>. Renters browsing ${esc(l.town || 'your town')} will see it on top.</span></div>` : ''}
       ${r.isOwner && !verified ? `<div class="notice notice-g" style="margin-bottom:10px">${ic('shield')}<span>Earn the green <b>Verified landlord</b> badge and post up to 5 listings — <a href="#/profile" style="text-decoration:underline">verify in your Profile</a>.</span></div>` : ''}
       ${photos.length ? `
       <div class="gallery">

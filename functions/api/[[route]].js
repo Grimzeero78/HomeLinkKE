@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS listings (
   availableFrom TEXT NOT NULL DEFAULT '',
   contactPhone TEXT NOT NULL DEFAULT '',
   status TEXT NOT NULL DEFAULT 'AVAILABLE',
+  hidden INTEGER NOT NULL DEFAULT 0,
   views INTEGER NOT NULL DEFAULT 0,
   boostedUntil INTEGER,
   createdAt INTEGER NOT NULL,
@@ -234,7 +235,7 @@ INSERT OR IGNORE INTO settings (key, value) VALUES ('gmaps_key','');
 `;
 
 let schemaReady = null;
-const SCHEMA_VER = '5';
+const SCHEMA_VER = '6';
 
 async function ensureSchema(env) {
   if (!schemaReady) {
@@ -277,6 +278,13 @@ async function ensureSchema(env) {
         //   to a person even when the landlord forgets to copy the transaction code.
         try { await env.DB.prepare("ALTER TABLE listings ADD COLUMN tags TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* column already exists */ }
         try { await env.DB.prepare("ALTER TABLE boosts ADD COLUMN senderName TEXT NOT NULL DEFAULT ''").run(); } catch (e) { /* column already exists */ }
+      }
+      if (ver < 6) {
+        // v6 — landlord hide/show: hidden = 1 keeps the listing alive on the landlord's
+        //   My Listings page (with a Show button to reverse it) but invisible to renters
+        //   everywhere: browse, search, map, favorites and the direct detail link.
+        //   Separate from delete, which now wipes the row and everything attached to it.
+        try { await env.DB.prepare('ALTER TABLE listings ADD COLUMN hidden INTEGER NOT NULL DEFAULT 0').run(); } catch (e) { /* column already exists */ }
       }
       await env.DB.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('schema_ver','" + SCHEMA_VER + "')").run();
     })().catch(e => { schemaReady = null; throw e; });
@@ -328,17 +336,23 @@ async function attachThumbs(env, rows, keyField = 'id', outField = 'thumb') {
 
 const CARD_COLS = `l.id, l.title, l.ptype, l.units, l.unitsVacant, l.rent, l.period, l.town, l.area, l.landmark, l.lat, l.lng,
   l.furnishing, l.water, l.elec, l.wifi, l.bath, l.kitchen, l.ensuite, l.parking, l.backup, l.garbage, l.tenantPref, l.availableFrom,
-  l.tags, l.status, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
+  l.tags, l.status, l.hidden, l.views, l.boostedUntil, l.createdAt, o.verify_status AS ownerVerified`;
 
 function like(v) { return '%' + S(v).replace(/[%_]/g, ' ') + '%'; }
 
 async function queryListings(env, url, opts = {}) {
-  const w = ["l.status != 'REMOVED'", 'o.suspended = 0'];
+  // hidden = 1 means "the landlord parked this listing" — still theirs, still editable,
+  // but no renter may see it anywhere. Only the owner's own query may include hidden rows.
+  const w = ["l.status != 'REMOVED'", 'o.suspended = 0', 'l.hidden != 1'];
   const p = [];
   const add = (cond, ...vals) => { w.push(cond); p.push(...vals); };
   const q = url.searchParams;
 
-  if (opts.mine && opts.user) { w.length = 0; w.push('l.ownerId = ?'); p.push(opts.user.id); }
+  if (opts.mine && opts.user) {
+    w.length = 0;
+    w.push('l.ownerId = ?', "l.status != 'REMOVED'");
+    p.push(opts.user.id);
+  }
   const s = S(q.get('q'));
   if (s) add('(l.title LIKE ? OR l.town LIKE ? OR l.area LIKE ? OR l.landmark LIKE ? OR l.tags LIKE ?)', like(s), like(s), like(s), like(s), like(s));
   if (q.get('town')) add('l.town = ?', S(q.get('town')));
@@ -588,6 +602,8 @@ export async function onRequest(context) {
         const isOwner = !!(user && user.id === l.ownerId);
         const canViewRemoved = isOwner || (user && user.role === 'ADMIN');
         if (l.status === 'REMOVED' && !canViewRemoved) return bad('Listing not found', 404);
+        // a hidden listing keeps working for its owner (and admin) but is a dead end for renters
+        if (l.hidden && !canViewRemoved) return bad('Listing not found', 404);
         const [photoResult, similar] = await Promise.all([
           env.DB.prepare('SELECT id, url, thumb FROM photos WHERE listingId = ? ORDER BY idx').bind(id).all(),
           queryListings(env, new URL('http://x/?limit=4'), {
@@ -659,14 +675,23 @@ export async function onRequest(context) {
         }
         return ok({ id });
       }
-      // delete (soft)
+      // delete (HARD) — 'Hide' is the reversible option; this one wipes every trace
+      // (photos, chats, favorites, reports, boosts, the row itself) so it is GONE.
       if (seg[1] && !seg[2] && method === 'DELETE') {
         const u = need(['LANDLORD', 'ADMIN']);
         const id = N(seg[1]);
         const own = await env.DB.prepare('SELECT * FROM listings WHERE id = ?').bind(id).first();
         if (!own) return bad('Listing not found', 404);
         if (user.role !== 'ADMIN' && own.ownerId !== u.id) return bad('Not your listing', 403);
-        await env.DB.prepare("UPDATE listings SET status = 'REMOVED', updatedAt = ? WHERE id = ?").bind(Date.now(), id).run();
+        await env.DB.batch([
+          env.DB.prepare('DELETE FROM messages WHERE convId IN (SELECT id FROM conversations WHERE listingId = ?)').bind(id),
+          env.DB.prepare('DELETE FROM conversations WHERE listingId = ?').bind(id),
+          env.DB.prepare('DELETE FROM photos WHERE listingId = ?').bind(id),
+          env.DB.prepare('DELETE FROM favorites WHERE listing_id = ?').bind(id),
+          env.DB.prepare('DELETE FROM reports WHERE listingId = ?').bind(id),
+          env.DB.prepare('DELETE FROM boosts WHERE listingId = ?').bind(id),
+          env.DB.prepare('DELETE FROM listings WHERE id = ?').bind(id),
+        ]);
         return ok();
       }
       // status toggle / vacancy update
@@ -691,6 +716,19 @@ export async function onRequest(context) {
         const st = vacant > 0 ? 'AVAILABLE' : 'TAKEN';
         await env.DB.prepare('UPDATE listings SET status = ?, unitsVacant = ?, updatedAt = ? WHERE id = ?').bind(st, vacant, Date.now(), id).run();
         return ok({ status: st, unitsVacant: vacant, units: total });
+      }
+      // hide / show — the reversible off-switch: renters stop seeing the listing
+      // everywhere, but it stays on the landlord's My Listings page and comes back
+      // the moment they tap Show. body: { hidden: true|false }
+      if (seg[1] && seg[2] === 'visibility' && method === 'POST') {
+        const u = need(['LANDLORD']);
+        const id = N(seg[1]);
+        const own = await env.DB.prepare('SELECT * FROM listings WHERE id = ?').bind(id).first();
+        if (!own || own.ownerId !== u.id) return bad('Listing not found', 404);
+        const b = await json_();
+        const hidden = b.hidden ? 1 : 0;
+        await env.DB.prepare('UPDATE listings SET hidden = ?, updatedAt = ? WHERE id = ?').bind(hidden, Date.now(), id).run();
+        return ok({ hidden: !!hidden });
       }
       // view counter (deduped per visitor per listing for 6 hours)
       if (seg[1] && seg[2] === 'view' && method === 'POST') {
@@ -717,6 +755,7 @@ export async function onRequest(context) {
         const own = await env.DB.prepare('SELECT * FROM listings WHERE id = ?').bind(id).first();
         if (!own || own.ownerId !== u.id) return bad('Listing not found', 404);
         if (own.boostedUntil && own.boostedUntil > Date.now()) return bad('This listing is already boosted');
+        if (own.hidden) return bad('Show this listing first — renters cannot see it while it is hidden');
         const pend = await env.DB.prepare("SELECT id FROM boosts WHERE listingId = ? AND status = 'PENDING'").bind(id).first();
         if (pend) return bad('You already have a boost awaiting confirmation');
         if (!rateLimit('boost:' + u.id, 5, 3600_000)) return tooMany();
@@ -748,7 +787,7 @@ export async function onRequest(context) {
         const rows = (await env.DB.prepare(
           `SELECT ${CARD_COLS}
            FROM favorites f JOIN listings l ON l.id = f.listing_id JOIN users o ON o.id = l.ownerId
-           WHERE f.user_id = ? AND l.status != 'REMOVED' ORDER BY f.created_at DESC`).bind(u.id).all()).results || [];
+           WHERE f.user_id = ? AND l.status != 'REMOVED' AND l.hidden != 1 ORDER BY f.created_at DESC`).bind(u.id).all()).results || [];
         await attachThumbs(env, rows);
         return ok({ items: rows });
       }

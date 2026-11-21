@@ -104,6 +104,7 @@ textarea.inp{min-height:84px;resize:vertical}
 .pill-x{background:var(--soft);color:var(--ink2)}
 .pill-vac{background:var(--pine-accent);color:#fff}
 .pill-full{background:var(--bad);color:#fff}
+.pill-muted{background:var(--soft);color:var(--ink3);border:1px dashed var(--line)}
 .vac-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .vac-lab{font-size:12.5px;font-weight:600;color:var(--ink2);min-width:110px}
 .vac-lab b{color:var(--pine-ink)}
