@@ -746,7 +746,18 @@ export async function onRequest(context) {
         if (!rateLimit('report:' + u.id, 5, 3600_000)) return tooMany();
         await env.DB.prepare('INSERT INTO reports (listingId, reporterId, reason, note, createdAt) VALUES (?,?,?,?,?)')
           .bind(N(seg[1]), u.id, S(b.reason), S(b.note).slice(0, 500), Date.now()).run();
-        return ok();
+        // firebreak: 3 open reports hide the listing on their own — with one admin,
+        // the feed cannot wait for a human to notice a viral scam wave
+        let autoHidden = false;
+        const rc = await env.DB.prepare("SELECT COUNT(*) AS n FROM reports WHERE listingId = ? AND status = 'OPEN'").bind(N(seg[1])).first();
+        if (rc.n >= 3) {
+          const lrow = await env.DB.prepare('SELECT hidden FROM listings WHERE id = ?').bind(N(seg[1])).first();
+          if (lrow && !lrow.hidden) {
+            await env.DB.prepare('UPDATE listings SET hidden = 1, updatedAt = ? WHERE id = ?').bind(Date.now(), N(seg[1])).run();
+            autoHidden = true;
+          }
+        }
+        return ok({ autoHidden });
       }
       // boost request
       if (seg[1] && seg[2] === 'boost' && method === 'POST') {
@@ -1057,7 +1068,7 @@ export async function onRequest(context) {
       }
       if (seg[1] === 'reports' && method === 'GET') {
         const rows = (await env.DB.prepare(
-          `SELECT r.*, l.title AS ltitle, l.status AS lstatus, us.username AS uname FROM reports r
+          `SELECT r.*, l.title AS ltitle, l.status AS lstatus, l.hidden AS lhidden, us.username AS uname FROM reports r
            JOIN listings l ON l.id = r.listingId LEFT JOIN users us ON us.id = r.reporterId
            WHERE r.status = 'OPEN' ORDER BY r.createdAt ASC`).all()).results || [];
         return ok({ items: rows });

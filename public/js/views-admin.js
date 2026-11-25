@@ -101,7 +101,7 @@ async function viewAdmin(tab) {
           <div class="row-sub">on <a href="#/listing/${rep.listingId}" style="color:var(--ember);font-weight:700">${esc(rep.ltitle)}</a>
            ${rep.uname ? ' · by @' + esc(rep.uname) : ''} · ${timeAgo(rep.createdAt)}</div>
           ${rep.note ? `<div class="row-sub" style="margin-top:4px">"${esc(rep.note)}"</div>` : ''}
-          <div class="row-sub" style="margin-top:4px">Listing status: ${esc(rep.lstatus)}</div>
+          <div class="row-sub" style="margin-top:4px">Listing status: ${esc(rep.lstatus)}${rep.lhidden ? ' · <b style="color:var(--ember)">Hidden — renters cannot see it</b>' : ''}</div>
         </div></div>
         <div class="row-acts">
           <button class="btn btn-outline btn-sm" data-a="remove">${ic('eye')} Hide listing</button>

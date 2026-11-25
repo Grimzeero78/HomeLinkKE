@@ -44,26 +44,63 @@ async function viewMyListings() {
           ${hid ? '' : `<a class="btn btn-primary btn-sm" href="#/boost/${l.id}">${ic('bolt')} ${boosted(l) ? 'Boost again' : 'Boost'}</a>`}
           <button class="btn btn-danger btn-sm" data-act="del" data-id="${l.id}" aria-label="Delete this listing forever">${ic('trash')}</button>
         </div>
-        <div class="vac-row" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
+        <div class="vac-row" data-id="${l.id}" data-v="${vac.v}" data-u="${vac.u}" style="margin-top:9px;padding-top:9px;border-top:1px dashed var(--line)">
           <span style="font-size:12px;font-weight:700;color:var(--ink3)">VACANCY</span>
-          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.max(0, vac.v - 1)}" ${vac.v <= 0 ? 'disabled' : ''} aria-label="One house was taken">−1</button>
+          <button class="btn btn-outline btn-sm" data-vac="${Math.max(0, vac.v - 1)}" ${vac.v <= 0 ? 'disabled' : ''} aria-label="One house was taken">−1</button>
           <span class="vac-lab">${vac.full ? '<b>All occupied</b>' : `<b>${vac.v}</b> ${vac.v === 1 ? 'house' : 'houses'} vacant`}</span>
-          <button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.min(50, vac.v + 1)}" ${vac.v >= 50 ? 'disabled' : ''} aria-label="One house is free again">+1</button>
+          <button class="btn btn-outline btn-sm" data-vac="${Math.min(50, vac.v + 1)}" ${vac.v >= 50 ? 'disabled' : ''} aria-label="One house is free again">+1</button>
           ${vac.full
-            ? `<button class="btn btn-outline btn-sm" data-vac="${l.id}:${Math.max(1, vac.u)}">Reopen</button>`
-            : `<button class="btn btn-outline btn-sm" data-vac="${l.id}:0">All taken</button>`}
+            ? `<button class="btn btn-outline btn-sm" data-vac="${Math.max(1, vac.u)}">Reopen</button>`
+            : `<button class="btn btn-outline btn-sm" data-vac="0">All taken</button>`}
         </div>
       </div>`;
     }).join('')
     : emptyBox('No listings yet', 'Post your first vacant room — it takes about 2 minutes.')}
     <a class="btn btn-green btn-block" href="#/new" style="margin-top:14px">${ic('plus')} Post a new listing</a>`;
 
-  // vacancy stepper — every tap saves instantly so the count renters see is always true
-  v.querySelectorAll('[data-vac]').forEach(b => b.onclick = async () => {
-    const i = b.dataset.vac.indexOf(':');
-    const id = b.dataset.vac.slice(0, i), nv = parseInt(b.dataset.vac.slice(i + 1), 10);
-    const res = await api('/listings/' + id + '/status', { body: { vacant: nv } });
-    if (res.ok) { toast(res.unitsVacant > 0 ? 'Saved — ' + res.unitsVacant + ' vacant' : 'Saved — all occupied'); viewMyListings(); } else toast(res.error, true);
+  // vacancy stepper — OPTIMISTIC: the count moves the moment you tap and the save
+  // runs quietly behind a toast, so it feels instant even on a slow network.
+  // (it used to wait for the server AND reload the whole list before anything moved)
+  const paintVac = (row, v, u) => {
+    row.dataset.v = v; row.dataset.u = u;
+    const full = v <= 0;
+    row.innerHTML = `
+      <span style="font-size:12px;font-weight:700;color:var(--ink3)">VACANCY</span>
+      <button class="btn btn-outline btn-sm" data-vac="${Math.max(0, v - 1)}" ${v <= 0 ? 'disabled' : ''} aria-label="One house was taken">−1</button>
+      <span class="vac-lab">${full ? '<b>All occupied</b>' : `<b>${v}</b> ${v === 1 ? 'house' : 'houses'} vacant`}</span>
+      <button class="btn btn-outline btn-sm" data-vac="${Math.min(50, v + 1)}" ${v >= 50 ? 'disabled' : ''} aria-label="One house is free again">+1</button>
+      ${full
+        ? `<button class="btn btn-outline btn-sm" data-vac="${Math.max(1, u)}">Reopen</button>`
+        : `<button class="btn btn-outline btn-sm" data-vac="0">All taken</button>`}`;
+    // keep the green/red vacancy pill at the top of the card in sync with the count
+    const pill = row.closest('.row-card').querySelector('.pill-vac, .pill-full');
+    if (pill) {
+      pill.className = 'pill ' + (full ? 'pill-full' : 'pill-vac');
+      pill.innerHTML = (full ? ic('x') : ic('check')) + esc(full ? 'All occupied' : (v === 1 ? '1 house vacant' : v + ' houses vacant'));
+    }
+  };
+  v.querySelectorAll('.vac-row').forEach(row => {
+    let chain = Promise.resolve(); // saves run in tap order — rapid taps never fight
+    row.addEventListener('click', e => {
+      const b = e.target.closest('[data-vac]');
+      if (!b || b.disabled) return;
+      const id = row.dataset.id, prev = +row.dataset.v, u = +row.dataset.u;
+      const nv = Math.max(0, Math.min(50, +b.dataset.vac));
+      if (nv === prev) return;
+      paintVac(row, nv, u);           // instant — zero network before this
+      toast('Updating vacancy…');     // popup while the save runs behind it
+      chain = chain.then(() =>
+        api('/listings/' + id + '/status', { body: { vacant: nv } }).then(res => {
+          if (res.ok) { if (+row.dataset.v === nv) toast(res.unitsVacant > 0 ? 'Saved — ' + res.unitsVacant + ' vacant' : 'Saved — all occupied'); }
+          else {
+            if (+row.dataset.v === nv) paintVac(row, prev, u); // put the old number back
+            toast(res.error, true);
+          }
+        }).catch(() => {
+          if (+row.dataset.v === nv) paintVac(row, prev, u);
+          toast('Network problem — the vacancy was not saved. Try again.', true);
+        }));
+    });
   });
   v.querySelectorAll('[data-act="hide"]').forEach(b => b.onclick = () => {
     const id = b.dataset.id, hid = b.dataset.hid === '1';

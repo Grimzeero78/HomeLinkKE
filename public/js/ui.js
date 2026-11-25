@@ -262,7 +262,7 @@ function openReport(listingId) {
     m => m.querySelector('#rp-send').onclick = async () => {
       const res = await api('/listings/' + listingId + '/report', { body: { reason: m.querySelector('#rp-reason').value, note: m.querySelector('#rp-note').value } });
       closeModal();
-      toast(res.ok ? 'Report sent. Our team will review it.' : res.error, !res.ok);
+      toast(res.ok ? (res.autoHidden ? 'Report sent — that listing has been hidden until the admin checks the reports.' : 'Report sent. Our team will review it.') : res.error, !res.ok);
     });
 }
 
